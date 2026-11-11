@@ -317,3 +317,16 @@ it('el job fija la empresa recibida, transmite en la cola «transmision» y limp
     tenancy()->establecer($this->d['empresa']->id);
     expect($this->dte->fresh()->estado)->toBe(EstadoDte::Transmitido);
 });
+
+it('arma, valida contra su esquema y firma cada tipo independiente (firmador simulado)', function (string $tipo) {
+    $dte = crearDteDeTipo($this->d, $tipo);
+    Http::fake([
+        '*firmardocumento*' => Http::response(['status' => 'OK', 'body' => 'eyJhbGciOiJSUzUxMiJ9.cGF5bG9hZA.ZmlybWE']),
+        URL_AUTH => Http::response(authOk()),
+        URL_RECEPCION => Http::response(procesado($dte->codigo_generacion)),
+    ]);
+    $this->dte = $dte;
+
+    expect(transmitir($this)->estado)->toBe(EstadoDte::Transmitido);
+    Http::assertSent(fn (Request $r) => $r->url() === URL_RECEPCION && $r['tipoDte'] === $tipo && $r['version'] === $dte->version);
+})->with(['03', '04', '07', '08', '09', '11', '14', '15']);

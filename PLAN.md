@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -217,3 +217,15 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - Se corrigió la validación de esquemas: el `multipleOf` de Opis fallaba con montos correctos por el error de coma
     flotante (7039.90 «no es múltiplo de 0.01»). Ahora se compara en decimal exacto (`MultiploExacto`) y `ext-bcmath`
     es obligatoria en `composer.json`.
+- **Paso 6 (2026-11-11):** builders de FSE (14), FEX (11, v3), CR (07), CL (08), DCL (09) y CD (15) en `app/Dte/Especiales/`,
+  cada uno con al menos 5 pruebas de cálculo, validación contra su esquema oficial y transmisión simulada (firma → envío).
+  Las fórmulas salen de la **Normativa v2.0, Anexo IV** («Validaciones para campos DTE», págs. 115–121), que confirma
+  también las de FE, CCF, NC, ND, FEX y FSE ya implementadas. 168 pruebas en verde.
+  - CL: valores sin IVA; documentos invalidados restan y las NC suman solo si están invalidadas; si lo que resta supera
+    lo que suma, $0.00. DCL: subtotal, IVA de la comisión y líquido según el Anexo IV.
+  - CL, DCL y CD no admiten contingencia (sus esquemas no tienen esos campos). En DCL el esquema exige `porcentComision`
+    numérico aunque la Normativa diga null: se envía 0.00.
+  - TODO(normativa): DCL — «monto sujeto a percepción sin IVA» e «IVA de las operaciones» no tienen fórmula en la
+    Normativa: los aporta quien emite. FSE — porcentaje de la retención de renta (10 % por defecto, sobre servicios).
+    CR — «IVA 13 %» del resumen se calcula como monto sujeto × 13 % para todos los códigos de retención.
+  - **PENDIENTE:** transmisión real de cada tipo (grupo `hacienda-pruebas`, ya escrita): espera las credenciales de pruebas.

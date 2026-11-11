@@ -35,3 +35,30 @@ it('obtiene un sello real de Hacienda para una Factura (01)', function () {
     expect($resultado->estado)->toBeIn([EstadoDte::Transmitido, EstadoDte::Observado])
         ->and($resultado->sello_recibido)->toHaveLength(40);
 })->group('hacienda-pruebas');
+
+/*
+| Paso 6: transmisión real de cada tipo que no depende de otro documento sellado.
+| (NC y ND ajustan un CCF con sello: se cubren en las pruebas mínimas del Paso 10.)
+*/
+dataset('tipos_independientes', ['03', '04', '07', '08', '09', '11', '14', '15']);
+
+it('obtiene un sello real de Hacienda para cada tipo', function (string $tipo) {
+    $nit = (string) env('HACIENDA_PRUEBAS_NIT');
+    if ($nit === '' || env('HACIENDA_PRUEBAS_PWD_API') === null || env('HACIENDA_PRUEBAS_PWD_PRIVADA') === null) {
+        $this->markTestSkipped('Faltan HACIENDA_PRUEBAS_* en el .env: prueba real pendiente de credenciales.');
+    }
+
+    $d = crearEmpresaDePrueba();
+    tenancy()->sinAislamiento(fn () => $d['empresa']->forceFill(['nit' => $nit])->save());
+    tenancy()->establecer($d['empresa']->id);
+    $credencial = EmpresaCredencial::query()->firstOrFail();
+    $credencial->forceFill(['usuario_api' => $nit])
+        ->establecerSecretos((string) env('HACIENDA_PRUEBAS_PWD_API'), (string) env('HACIENDA_PRUEBAS_PWD_PRIVADA'))
+        ->save();
+
+    $dte = crearDteDeTipo(['empresa' => $d['empresa']->fresh(), 'establecimiento' => $d['establecimiento'], 'puntoVenta' => $d['puntoVenta']], $tipo);
+    $resultado = TransmisorDte::crear()->procesar($dte, $d['empresa']->fresh(), $credencial);
+
+    expect($resultado->estado)->toBeIn([EstadoDte::Transmitido, EstadoDte::Observado])
+        ->and($resultado->sello_recibido)->toHaveLength(40);
+})->with('tipos_independientes')->group('hacienda-pruebas');

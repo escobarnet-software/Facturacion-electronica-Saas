@@ -1,6 +1,17 @@
 <?php
 
+use App\Dte\Contribuyente\CreditoFiscalBuilder;
+use App\Dte\Contribuyente\DocumentoContribuyente;
+use App\Dte\Contribuyente\Linea;
+use App\Dte\Contribuyente\NotaRemisionBuilder;
+use App\Dte\Contribuyente\ReceptorContribuyente;
 use App\Dte\Correlativos\Correlativos;
+use App\Dte\Especiales\ContableLiquidacionBuilder;
+use App\Dte\Especiales\DonacionBuilder;
+use App\Dte\Especiales\ExportacionBuilder;
+use App\Dte\Especiales\LiquidacionBuilder;
+use App\Dte\Especiales\RetencionBuilder;
+use App\Dte\Especiales\SujetoExcluidoBuilder;
 use App\Dte\Factura\FacturaBuilder;
 use App\Dte\Modelos\Emisor;
 use App\Dte\Modelos\LineaVenta;
@@ -111,5 +122,46 @@ function crearDteDePrueba(array $d, string $estado = 'borrador'): Dte
         'json_texto' => $factura->json,
         'json_original' => $factura->documento(),
         'jws' => $estado === 'firmado' ? 'eyJhbGciOiJSUzUxMiJ9.FALSO.FIRMA' : null,
+    ]);
+}
+
+/**
+ * Crea un DTE de prueba de cualquier tipo independiente (03, 04, 07, 08, 09, 11, 14, 15)
+ * con los builders reales, para la prueba contra Hacienda.
+ *
+ * @param  array{empresa: Empresa, establecimiento: Establecimiento, puntoVenta: PuntoVenta}  $d
+ */
+function crearDteDeTipo(array $d, string $tipo): Dte
+{
+    $e = $d['empresa'];
+    $emisor = new Emisor(
+        nit: $e->nit, nrc: (string) $e->nrc, nombre: $e->razon_social, codActividad: '46900',
+        descActividad: 'Venta al por mayor de otros productos', nombreComercial: $e->nombre_comercial,
+        departamento: '06', municipio: '23', distrito: '14', complemento: 'San Salvador',
+        telefono: '22223333', correo: 'dte@empresa.test', codEstable: 'M001', codPuntoVenta: 'P001',
+    );
+    $fecha = new DateTimeImmutable('now', new DateTimeZone('America/El_Salvador'));
+    $n = app(Correlativos::class)->siguiente($e, $tipo, $d['establecimiento'], $d['puntoVenta'], $fecha);
+    $cliente = new ReceptorContribuyente('06140101851014', '765432', 'CLIENTE DE PRUEBA, S.A. DE C.V.', '46900', 'Venta al por mayor', '06', '23', '14', 'San Salvador', 'cliente@prueba.test');
+    $doc = fn (array $extra = []) => new DocumentoContribuyente([Linea::gravada('Mercadería de prueba', '1', '100.00')], $cliente, $n, $fecha, ...$extra);
+    $especial = fn (string $clase) => new $clase;
+
+    $armado = match ($tipo) {
+        '03' => (new CreditoFiscalBuilder($emisor))->construir($doc()),
+        '04' => (new NotaRemisionBuilder($emisor))->construir($doc(['bienTitulo' => '04'])),
+        '07' => $especial(RetencionBuilder::class)->construir($emisor, $cliente, [['tipoDte' => '03', 'tipoGeneracion' => 1, 'numeroDocumento' => '123456', 'fechaEmision' => $fecha->format('Y-m-d'), 'montoSujetoGrav' => '100.00', 'codigoRetencionMH' => '22']], $n, $fecha),
+        '08' => $especial(LiquidacionBuilder::class)->construir($emisor, $cliente, 1, [['tipoDte' => '03', 'tipoGeneracion' => 1, 'numeroDocumento' => '123456', 'fechaEmision' => $fecha->format('Y-m-d'), 'ventaGravada' => '100.00']], $n, $fecha),
+        '09' => $especial(ContableLiquidacionBuilder::class)->construir($emisor, ['nit' => '06140101851014', 'nombre' => 'AFILIADO DE PRUEBA', 'codActividad' => '56101', 'descActividad' => 'Restaurantes', 'tipoEstablecimiento' => '02', 'correo' => 'afiliado@prueba.test'], ['inicio' => $fecha->format('Y-m-01'), 'fin' => $fecha->format('Y-m-d'), 'valorOperaciones' => '113.00', 'montoSujetoPercepcion' => '100.00', 'iva' => '13.00'], ['nombEntrega' => 'Persona de prueba', 'docuEntrega' => '012345678'], $n, $fecha),
+        '11' => $especial(ExportacionBuilder::class)->construir($emisor, ['tipoItemExpor' => 2], ['nombre' => 'CLIENTE EXTERIOR', 'tipoDocumento' => '37', 'numDocumento' => 'EXT-1', 'descActividad' => 'Servicios informáticos', 'codPais' => 'US', 'nombrePais' => 'Estados Unidos', 'complemento' => 'Miami', 'tipoPersona' => 2], [['descripcion' => 'Servicio de prueba', 'cantidad' => '1', 'precio' => '100.00', 'tipoItem' => 2]], $n, $fecha),
+        '14' => $especial(SujetoExcluidoBuilder::class)->construir($emisor, ['tipoDocumento' => '13', 'numDocumento' => '012345678', 'nombre' => 'Persona de prueba', 'departamento' => '06', 'municipio' => '23', 'distrito' => '14', 'complemento' => 'San Salvador'], [['descripcion' => 'Compra de prueba', 'cantidad' => '1', 'precio' => '50.00']], $n, $fecha),
+        '15' => $especial(DonacionBuilder::class)->construir($emisor, '36', ['tipoDocumento' => '36', 'numDocumento' => '06140101851014', 'nombre' => 'DONANTE DE PRUEBA', 'codDomiciliado' => 1, 'codPais' => '9300'], [['tipoDonacion' => 1, 'descripcion' => 'Donación de prueba', 'cantidad' => '1', 'valorUni' => '50.00']], [['codDocAsociado' => 1, 'descDocumento' => 'Acuerdo', 'detalleDocumento' => 'Acuerdo de prueba']], $n, $fecha),
+    };
+
+    return Dte::query()->create([
+        'establecimiento_id' => $d['establecimiento']->id, 'punto_venta_id' => $d['puntoVenta']->id,
+        'tipo' => $tipo, 'version' => $armado->version, 'ambiente' => '00',
+        'codigo_generacion' => $armado->codigoGeneracion, 'numero_control' => $armado->numeroControl,
+        'fecha_emision' => $fecha->format('Y-m-d'), 'hora_emision' => $fecha->format('H:i:s'), 'estado' => 'borrador',
+        'json_texto' => $armado->json, 'json_original' => $armado->documento(),
     ]);
 }
