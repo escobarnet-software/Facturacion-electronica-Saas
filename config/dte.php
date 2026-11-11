@@ -96,6 +96,9 @@ return [
     // codigoMsg de Hacienda → mensaje simple en español.
     'mensajes_mh' => require __DIR__.'/dte/mensajes_mh.php',
 
+    // Pruebas mínimas para la autorización como emisor (Manual Funcional XXIV).
+    'pruebas_minimas' => require __DIR__.'/dte/pruebas_minimas.php',
+
     // Campos y su letra de representación gráfica (Anexo II).
     'campos' => require __DIR__.'/dte/campos.php',
 

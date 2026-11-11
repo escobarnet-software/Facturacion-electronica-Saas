@@ -18,6 +18,7 @@ use App\Models\Establecimiento;
 use App\Models\Evento;
 use App\Models\Lote;
 use App\Models\Producto;
+use App\Models\PruebaMinima;
 use App\Models\PuntoVenta;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +27,7 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
@@ -42,6 +43,7 @@ beforeEach(function () {
             Lote::query()->create(['contingencia_id' => $c->id, 'id_envio' => CodigoGeneracion::nuevo(), 'estado' => 'recibido', 'dte_ids' => []]);
             Producto::query()->create(['descripcion' => 'Producto', 'precio' => '1']);
             Cliente::query()->create(['tipo_documento' => '13', 'num_documento' => '012345678', 'nombre' => 'Cliente']);
+            PruebaMinima::query()->create(['tipo' => '01', 'requeridas' => 90]);
         });
     }
 });
@@ -64,7 +66,7 @@ it('por Eloquent, la empresa A solo ve sus propios datos', function () {
     tenancy()->establecer($this->a['empresa']->id);
     $idA = $this->a['empresa']->id;
 
-    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class, Dte::class, DteEventoInterno::class, Evento::class, Contingencia::class, Lote::class, Producto::class, Cliente::class] as $modelo) {
+    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class, Dte::class, DteEventoInterno::class, Evento::class, Contingencia::class, Lote::class, Producto::class, Cliente::class, PruebaMinima::class] as $modelo) {
         $empresas = $modelo::query()->pluck('empresa_id')->unique()->values()->all();
         expect($empresas)->toBe([$idA], "{$modelo} filtró datos de otra empresa");
     }
@@ -115,7 +117,7 @@ it('por SQL directo, la empresa A no puede insertar, modificar ni borrar datos d
     expect(DB::update("UPDATE dte_eventos_internos SET motivo = 'alterado' WHERE empresa_id = ?", [$idB]))->toBe(0)
         ->and(DB::delete('DELETE FROM dte_eventos_internos WHERE empresa_id = ?', [$idB]))->toBe(0);
 
-    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos', 'dtes', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes'] as $tabla) {
+    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos', 'dtes', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas'] as $tabla) {
         expect(DB::update("UPDATE {$tabla} SET updated_at = now() WHERE empresa_id = ?", [$idB]))->toBe(0, "Se modificó {$tabla} de B")
             ->and(DB::delete("DELETE FROM {$tabla} WHERE empresa_id = ?", [$idB]))->toBe(0, "Se borró {$tabla} de B");
     }

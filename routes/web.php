@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/productos', Panel\Productos::class)->name('panel.productos');
         Route::get('/panel/clientes', Panel\Clientes::class)->name('panel.clientes');
         Route::get('/panel/establecimientos', Panel\Establecimientos::class)->name('panel.establecimientos');
+        Route::get('/panel/configuracion', Panel\Onboarding::class)->name('panel.onboarding');
 
         Route::post('/empresa-activa', EmpresaActivaController::class)->name('empresa-activa');
     });

@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -272,3 +272,14 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - Vite ya no descarga fuentes de internet al compilar (se quitó fonts.bunny.net). CI compila los assets.
   - Pendiente: en la Factura, por ahora, solo ventas gravadas sin descuento por línea (limitación del builder del Paso 1);
     el trabajo del POS sin conexión a internet del navegador (PWA) queda para después: sin Hacienda ya entra en contingencia.
+- **Paso 10 (2026-11-11):** pruebas mínimas del Manual Funcional XXIV en `config/dte/pruebas_minimas.php` (FE 90, CCF 75,
+  NR 50, NC 50, ND 25, CR 50, CL 75, DCL 50, FEX 90, FSE 25, CD 25 y 5 de cada evento). Comando
+  `dte:pruebas-minimas {empresa} [--tipos=] [--dry-run]` con barras de avance: la simulación arma y valida los 605
+  documentos sin guardar ni transmitir; la ejecución real guarda el avance por tipo (tabla `pruebas_minimas`, con RLS),
+  se reanuda donde quedó y se detiene tras 5 rechazos seguidos o si se bloquean las credenciales. NC/ND usan un CCF
+  sellado de las mismas pruebas; los eventos usan sus propias facturas. Asistente de onboarding (§18) solo para el dueño:
+  datos de la empresa y del responsable, credenciales cifradas y certificado (nunca se muestran de vuelta), pruebas en
+  segundo plano con barras de avance, y paso a producción solo con credenciales de producción. 264 pruebas en verde.
+  - En las pruebas el receptor contribuyente es la propia empresa (su NIT y NRC existen en Hacienda).
+  - **PENDIENTE:** la ejecución real contra el ambiente de pruebas de Hacienda (por indicación del usuario, todo con
+    Http::fake hasta que avise).
