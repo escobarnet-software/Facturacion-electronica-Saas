@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\DocumentoDescargaController;
 use App\Http\Controllers\EmpresaActivaController;
 use App\Http\Controllers\PortalDteController;
-use App\Models\Empresa;
+use App\Livewire\Panel;
 use App\Models\Usuario;
-use App\Tenancy\Tenancy;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/panel');
@@ -22,15 +22,17 @@ Route::middleware('auth')->group(function () {
 
     // 'empresa' va primero: fija el usuario en la sesión de BD para que RLS deje leer sus membresías.
     Route::middleware(['empresa', '2fa'])->group(function () {
-        Route::get('/panel', function (Tenancy $tenancy) {
-            /** @var Usuario $usuario */
-            $usuario = auth()->user();
-
-            return view('panel.inicio', [
-                'empresa' => $tenancy->hayEmpresa() ? Empresa::query()->find($tenancy->empresaId()) : null,
-                'empresas' => $usuario->empresas()->orderBy('razon_social')->get(),
-            ]);
-        })->name('panel');
+        Route::get('/panel', Panel\Inicio::class)->name('panel');
+        Route::get('/panel/emitir', Panel\Emitir::class)->name('panel.emitir');
+        Route::get('/panel/caja', Panel\Caja::class)->name('panel.caja');
+        Route::get('/panel/documentos', Panel\Documentos::class)->name('panel.documentos');
+        Route::get('/panel/documentos/{dte}/pdf', [DocumentoDescargaController::class, 'pdf'])->name('panel.documentos.pdf');
+        Route::get('/panel/documentos/{dte}/json', [DocumentoDescargaController::class, 'json'])->name('panel.documentos.json');
+        Route::get('/panel/invalidaciones', Panel\Invalidaciones::class)->name('panel.invalidaciones');
+        Route::get('/panel/contingencia', Panel\ContingenciaEstado::class)->name('panel.contingencia');
+        Route::get('/panel/productos', Panel\Productos::class)->name('panel.productos');
+        Route::get('/panel/clientes', Panel\Clientes::class)->name('panel.clientes');
+        Route::get('/panel/establecimientos', Panel\Establecimientos::class)->name('panel.establecimientos');
 
         Route::post('/empresa-activa', EmpresaActivaController::class)->name('empresa-activa');
     });

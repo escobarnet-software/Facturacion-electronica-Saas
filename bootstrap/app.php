@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'empresa' => FijarEmpresaActiva::class,
             '2fa' => Exigir2FA::class,
         ]);
+
+        // La empresa activa se fija ANTES de resolver los modelos de la ruta ({dte}):
+        // así EmpresaScope y RLS ya filtran al buscarlos (otra empresa → 404).
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: FijarEmpresaActiva::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Nunca devolver a la sesión (old input) los secretos de los clientes.

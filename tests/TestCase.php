@@ -14,5 +14,8 @@ abstract class TestCase extends BaseTestCase
         // Ninguna prueba sale a internet: ni a Hacienda (tampoco a apitest) ni al firmador.
         // Toda petición HTTP debe estar simulada con Http::fake; si no, la prueba falla.
         Http::preventStrayRequests();
+
+        // Las pruebas no necesitan los assets compilados (npm run build).
+        $this->withoutVite();
     }
 }

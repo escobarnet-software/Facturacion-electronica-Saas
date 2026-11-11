@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Rol;
+use App\Tenancy\Tenancy;
 use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -54,6 +55,23 @@ class Usuario extends Authenticatable
             ->as('membresia')
             ->withPivot(['rol', 'punto_venta_id'])
             ->withTimestamps();
+    }
+
+    /** Rol en la empresa activa (o null). */
+    public function rolActual(): ?Rol
+    {
+        $empresaId = app(Tenancy::class)->empresaId();
+
+        return $empresaId === null ? null : $this->rolEn($empresaId);
+    }
+
+    /** Punto de venta asignado al cajero en la empresa activa. */
+    public function puntoVentaActual(): ?int
+    {
+        $empresaId = app(Tenancy::class)->empresaId();
+        $id = $empresaId === null ? null : $this->empresas()->whereKey($empresaId)->value('empresa_usuario.punto_venta_id');
+
+        return $id === null ? null : (int) $id;
     }
 
     public function perteneceA(int $empresaId): bool

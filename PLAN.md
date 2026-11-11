@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -258,3 +258,17 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - La revisión de las instantáneas encontró y corrigió: claves reordenadas por jsonb (se usa el texto exacto),
     municipio/distrito buscados sin su departamento y montos en cero mostrados como guion.
   - Pendiente para el Paso 9: subir el logo de la empresa desde el panel (la representación ya lo admite: `empresas.logo_path`).
+- **Paso 9 (2026-11-11):** panel con Livewire 4 + Tailwind 4 (`app/Livewire/Panel/`): tablero (ventas del día y del mes,
+  documentos por estado, alertas de rechazos, contingencia, credenciales y plazos de invalidación), Emitir FE/CCF con
+  cliente y productos del catálogo y resumen en vivo, Caja rápida (POS) con código de barras y ticket de 80 mm,
+  Documentos emitidos (filtros por fecha, tipo, estado, receptor y código; reenviar; PDF/JSON; exportar a Excel),
+  Invalidaciones (plazo restante y asistente), Contingencia (estado, pendientes, evento, borrador del informe) y
+  catálogos (productos, clientes con documento enmascarado, establecimientos y puntos de venta). Servicio central
+  `EmisionDte` (lo usarán también el POS y la API): la plataforma calcula; valida antes de tomar el correlativo.
+  Permisos por rol (Gates): el cajero emite solo desde su punto de venta y solo ve lo suyo; «consulta» no emite.
+  253 pruebas en verde.
+  - Corregido: un job en la cola síncrona limpiaba la empresa activa de la petición (ahora la restaura); el enlace de
+    modelos `{dte}` se resolvía antes de fijar la empresa (ahora `empresa` va antes de `SubstituteBindings`).
+  - Vite ya no descarga fuentes de internet al compilar (se quitó fonts.bunny.net). CI compila los assets.
+  - Pendiente: en la Factura, por ahora, solo ventas gravadas sin descuento por línea (limitación del builder del Paso 1);
+    el trabajo del POS sin conexión a internet del navegador (PWA) queda para después: sin Hacienda ya entra en contingencia.
