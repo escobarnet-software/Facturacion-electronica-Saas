@@ -20,6 +20,8 @@ Documentos Tributarios Electrónicos (DTE) ante el Ministerio de Hacienda de El 
 cp .env.example .env
 composer install
 php artisan key:generate
+# Llave dedicada para cifrar credenciales de clientes (pegarla en DTE_SECRETS_KEY del .env):
+php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 docker compose up -d          # postgres, redis, s3, firmador, mailpit
 php artisan migrate
 php artisan test
@@ -27,7 +29,7 @@ php artisan test
 
 | Servicio | Para qué | Dirección local |
 |---|---|---|
-| `postgres` | Base de datos (`dte`) y base de pruebas (`dte_test`) | `127.0.0.1:5432` |
+| `postgres` | Base de datos (`dte`) y base de pruebas (`dte_test`); la app usa el rol `dte_app` (sin superusuario, para que RLS aplique) | `127.0.0.1:5432` |
 | `redis` | Colas y caché (Horizon) | `127.0.0.1:6379` |
 | `s3` | Almacenamiento compatible con S3 (SeaweedFS), bucket `dte-archivo` con versionado | `http://127.0.0.1:8333` |
 | `firmador` | Firmador oficial de Hacienda (`svfe-api-firmador`) | `http://127.0.0.1:8113/firmardocumento/` |
@@ -37,6 +39,13 @@ Todos los puertos se publican solo en `127.0.0.1`. En producción el firmador **
 
 > **Nota sobre S3:** el plan decía MinIO para desarrollo, pero sus imágenes ya no se publican en Docker Hub.
 > Se usa SeaweedFS, que habla el mismo protocolo S3; el código de Laravel no cambia.
+
+### Multiempresa
+
+Cada tabla de negocio lleva `empresa_id` y está aislada dos veces: el scope global `EmpresaScope` y
+Row Level Security de PostgreSQL (`app.empresa_id` se fija en cada petición y en cada job).
+Si ya tenía levantado PostgreSQL antes de este cambio, recree el volumen para que se cree el rol `dte_app`:
+`docker compose down -v && docker compose up -d`.
 
 ### Firmador
 

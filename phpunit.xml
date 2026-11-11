@@ -35,6 +35,9 @@
         <env name="DB_URL" value=""/>
         <env name="APP_TIMEZONE" value="America/El_Salvador"/>
         <env name="DTE_AMBIENTE" value="00"/>
+        <!-- Llave FALSA solo para pruebas (32 bytes en base64). -->
+        <env name="DTE_SECRETS_KEY" value="base64:cHJ1ZWJhcy1sbGF2ZS1mYWxzYS0zMi1ieXRlcyEhISE="/>
+        <env name="DTE_CERTIFICADOS_PATH" value="storage/framework/testing/certificados"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

@@ -34,8 +34,9 @@ jobs:
     env:
       DB_HOST: 127.0.0.1
       DB_PORT: 5432
-      DB_USERNAME: dte
-      DB_PASSWORD: dte
+      # La app usa un rol SIN superusuario ni BYPASSRLS: si no, RLS no se aplicaría.
+      DB_USERNAME: dte_app
+      DB_PASSWORD: dte_app
       REDIS_HOST: 127.0.0.1
 
     steps:
@@ -55,6 +56,15 @@ jobs:
           key: composer-${{ hashFiles('composer.lock') }}
 
       - run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Crear el rol de la aplicación (dte_app)
+        env:
+          PGPASSWORD: dte
+        run: |
+          psql -h 127.0.0.1 -U dte -d postgres -v ON_ERROR_STOP=1 \
+            -c "CREATE ROLE dte_app LOGIN PASSWORD 'dte_app' NOSUPERUSER NOBYPASSRLS NOCREATEROLE" \
+            -c "ALTER DATABASE dte_test OWNER TO dte_app"
+          psql -h 127.0.0.1 -U dte -d dte_test -v ON_ERROR_STOP=1 -c "ALTER SCHEMA public OWNER TO dte_app"
 
       - name: Preparar .env
         run: |

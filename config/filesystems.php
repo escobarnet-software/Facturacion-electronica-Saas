@@ -38,6 +38,23 @@ return [
             'report' => false,
         ],
 
+        // Certificados {NIT}.crt de las empresas. Lo monta el firmador en /uploads.
+        // Privado (600) y sin URL: nunca se sirve por HTTP.
+        'certificados' => [
+            'driver' => 'local',
+            'root' => (function (?string $ruta) {
+                return $ruta === null || $ruta === '' ? storage_path('app/private/certificados') : (str_starts_with($ruta, '/') ? $ruta : base_path($ruta));
+            })(env('DTE_CERTIFICADOS_PATH')),
+            'visibility' => 'private',
+            'permissions' => [
+                'file' => ['public' => 0600, 'private' => 0600],
+                'dir' => ['public' => 0700, 'private' => 0700],
+            ],
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

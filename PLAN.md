@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [ ] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -168,3 +168,12 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   el código fuente de Hacienda) y Mailpit. `config/dte.php` con URL, timeouts, reintentos, horas de token y tamaño de lote.
   - MinIO ya no publica imágenes en Docker Hub: el S3 local es **SeaweedFS** (mismo protocolo S3).
   - Esquemas oficiales descargados: 15/15 en `resources/schemas/`. **FEX es versión 3** (la Normativa dice 2; manda el esquema).
+- **Paso 1 (2026-11-11):** tablas `empresas`, `usuarios`, `empresa_usuario` (rol), `establecimientos`, `puntos_venta`,
+  `empresa_credenciales` y `bitacora`. Aislamiento en dos capas: `EmpresaScope` (falla cerrado sin empresa) y RLS
+  ENABLE + FORCE en todas las tablas de negocio, con `set_config('app.empresa_id')` por petición (middleware `empresa`)
+  y por job (`ConEmpresa`). La app se conecta con el rol `dte_app` (sin superusuario ni BYPASSRLS).
+  Escape explícito y auditable: `Tenancy::sinAislamiento()` (crear empresas, tareas de plataforma).
+  Login con Fortify; 2FA (TOTP) obligatoria para dueños y superadmin; cambio de empresa activa.
+  Secretos cifrados con `DTE_SECRETS_KEY` (AES-256-GCM, distinta de APP_KEY), ocultos en toArray/toJson/logs/var_dump,
+  `#[\SensitiveParameter]`; certificados `{NIT}.crt` en disco privado con permisos 600. Bitácora append-only con trigger
+  que rechaza UPDATE/DELETE/TRUNCATE. 37 pruebas en verde.
