@@ -1,6 +1,13 @@
 <?php
 
+use App\Dte\Correlativos\Correlativos;
+use App\Dte\Factura\FacturaBuilder;
+use App\Dte\Modelos\Emisor;
+use App\Dte\Modelos\LineaVenta;
+use App\Dte\Modelos\Receptor;
+use App\Dte\Modelos\Venta;
 use App\Enums\Rol;
+use App\Models\Dte;
 use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
 use App\Models\Establecimiento;
@@ -65,4 +72,44 @@ function crearEmpresaDePrueba(Rol $rol = Rol::Contador, ?Usuario $usuario = null
 function fallaEnBaseDeDatos(Closure $sql): void
 {
     expect(fn () => DB::transaction($sql))->toThrow(QueryException::class);
+}
+
+/**
+ * Crea un DTE de prueba (Factura 01 de la pupusería) para la empresa activa,
+ * armado con el FacturaBuilder real y validado contra el esquema oficial.
+ *
+ * @param  array{empresa: Empresa, establecimiento: Establecimiento, puntoVenta: PuntoVenta}  $d
+ */
+function crearDteDePrueba(array $d, string $estado = 'borrador'): Dte
+{
+    $emisor = new Emisor(
+        nit: $d['empresa']->nit, nrc: '1234567', nombre: 'PUPUSERÍA DE PRUEBA, S.A. DE C.V.',
+        codActividad: '56101', descActividad: 'Restaurantes', nombreComercial: 'Pupusería de prueba',
+        departamento: '06', municipio: '23', distrito: '14', complemento: 'Colonia Escalón, San Salvador',
+        telefono: '22223333', correo: 'ventas@pupuseria.test', codEstable: 'M001', codPuntoVenta: 'P001',
+    );
+    $fecha = new DateTimeImmutable('now', new DateTimeZone('America/El_Salvador'));
+    $correlativo = app(Correlativos::class)
+        ->siguiente($d['empresa'], '01', $d['establecimiento'], $d['puntoVenta'], $fecha);
+
+    $factura = (new FacturaBuilder($emisor, '00'))->construir(new Venta(
+        lineas: [new LineaVenta('Pupusa revuelta', '6', '0.75'), new LineaVenta('Horchata', '2', '1.00')],
+        receptor: Receptor::consumidorFinal(),
+        correlativo: $correlativo,
+        fechaHora: $fecha,
+    ));
+
+    return Dte::query()->create([
+        'establecimiento_id' => $d['establecimiento']->id,
+        'punto_venta_id' => $d['puntoVenta']->id,
+        'tipo' => '01', 'version' => 2, 'ambiente' => '00',
+        'codigo_generacion' => $factura->codigoGeneracion,
+        'numero_control' => $factura->numeroControl,
+        'fecha_emision' => $fecha->format('Y-m-d'), 'hora_emision' => $fecha->format('H:i:s'),
+        'estado' => $estado,
+        'total_gravada' => (string) $factura->totalPagar, 'total_iva' => (string) $factura->totalIva, 'total_pagar' => (string) $factura->totalPagar,
+        'json_texto' => $factura->json,
+        'json_original' => $factura->documento(),
+        'jws' => $estado === 'firmado' ? 'eyJhbGciOiJSUzUxMiJ9.FALSO.FIRMA' : null,
+    ]);
 }

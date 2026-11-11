@@ -86,4 +86,7 @@ return [
     'secrets_key' => env('DTE_SECRETS_KEY'),
 
     'zona_horaria' => 'America/El_Salvador',
+
+    // codigoMsg de Hacienda → mensaje simple en español.
+    'mensajes_mh' => require __DIR__.'/dte/mensajes_mh.php',
 ];

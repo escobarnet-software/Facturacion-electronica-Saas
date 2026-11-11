@@ -1,10 +1,13 @@
 <?php
 
 use App\Dte\Correlativos\Correlativos;
+use App\Enums\EstadoDte;
 use App\Enums\Rol;
 use App\Jobs\Middleware\ConEmpresa;
 use App\Models\Bitacora;
 use App\Models\Correlativo;
+use App\Models\Dte;
+use App\Models\DteEventoInterno;
 use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
 use App\Models\EmpresaUsuario;
@@ -17,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
@@ -27,6 +30,7 @@ beforeEach(function () {
         tenancy()->ejecutarComo($datos['empresa']->id, function () use ($datos) {
             Bitacora::registrar('prueba.creada');
             app(Correlativos::class)->siguiente($datos['empresa'], '01', $datos['establecimiento'], $datos['puntoVenta'], now());
+            crearDteDePrueba($datos)->transicionar(EstadoDte::Validado, 'prueba');
         });
     }
 });
@@ -49,7 +53,7 @@ it('por Eloquent, la empresa A solo ve sus propios datos', function () {
     tenancy()->establecer($this->a['empresa']->id);
     $idA = $this->a['empresa']->id;
 
-    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class] as $modelo) {
+    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class, Dte::class, DteEventoInterno::class] as $modelo) {
         $empresas = $modelo::query()->pluck('empresa_id')->unique()->values()->all();
         expect($empresas)->toBe([$idA], "{$modelo} filtró datos de otra empresa");
     }
@@ -97,7 +101,10 @@ it('por SQL directo, la empresa A no puede insertar, modificar ni borrar datos d
         "INSERT INTO empresa_credenciales (empresa_id, ambiente, usuario_api, pwd_api, pwd_privada) VALUES (?, '01', 'x', 'x', 'x')", [$idB],
     ));
 
-    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos'] as $tabla) {
+    expect(DB::update("UPDATE dte_eventos_internos SET motivo = 'alterado' WHERE empresa_id = ?", [$idB]))->toBe(0)
+        ->and(DB::delete('DELETE FROM dte_eventos_internos WHERE empresa_id = ?', [$idB]))->toBe(0);
+
+    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos', 'dtes'] as $tabla) {
         expect(DB::update("UPDATE {$tabla} SET updated_at = now() WHERE empresa_id = ?", [$idB]))->toBe(0, "Se modificó {$tabla} de B")
             ->and(DB::delete("DELETE FROM {$tabla} WHERE empresa_id = ?", [$idB]))->toBe(0, "Se borró {$tabla} de B");
     }

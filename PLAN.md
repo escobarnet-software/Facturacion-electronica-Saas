@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -194,3 +194,14 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
     `por_tipo` (defecto), `por_establecimiento` y `centralizado` (TODO(normativa): decisión pendiente nº 1).
     El correlativo se toma en su propia transacción, fuera de la emisión, para no reutilizar números.
   - 50 procesos concurrentes reales obtienen 50 números distintos y consecutivos. 92 pruebas en verde.
+- **Paso 4 (2026-11-11):** `FirmadorClient` (envía el JSON exacto; la clave nunca aparece en errores),
+  `HaciendaClient` (auth, recepción, consulta, lote, consulta de lote, contingencia, invalidación; token en caché por
+  empresa y ambiente; renovación si Hacienda responde 401/403), `TransmisorDte` con la política del MTIST 3.3
+  (8 s → consulta → máx. 2 reenvíos con el mismo código → contingencia/«transitorio») y job `TransmitirDte`
+  en la cola `transmision`. Tabla `dtes` (JSON exacto + jsonb, trigger que impide alterar JSON/firma/sello una vez
+  sellado) y `dte_eventos_internos`; enum `EstadoDte`. 3 logins fallidos bloquean y avisan; el 4.º no llega a Hacienda.
+  `config/dte/mensajes_mh.php` con todos los códigos del MTIST en español. 107 pruebas en verde.
+  - Resueltos [VERIFICAR] de ESPECIFICACION §8.2 con el MTIST (ver `docs/oficial/MTIST-v2-notas.md`): el token ya
+    incluye «Bearer»; `idEnvio` es entero en recepción/invalidación y UUID en lotes; el MTIST no exige un User-Agent concreto.
+  - **PENDIENTE:** la prueba real del grupo `hacienda-pruebas` (sello real de una FE) espera las credenciales de
+    pruebas de Hacienda y el certificado `.crt` del usuario. Con `Http::fake` todo pasa.
