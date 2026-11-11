@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -246,4 +246,15 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - TODO(normativa): el MTIST no detalla el servicio para retorno y operaciones especiales: se envían por
     `recepciondte` con tipoDte 18 y 17. Confirmar si Semana Santa completa, fiestas agostinas o el cierre de fin de año
     son inhábiles. Los datos del responsable (nombre y documento) se agregaron a `empresas` porque los exige el evento.
-  - 220+ pruebas en verde.
+  - 208 pruebas en verde.
+- **Paso 8 (2026-11-11):** `config/dte/campos.php` transcrito del Anexo II de la Normativa (176 campos con su letra
+  A/B/C/D, el nombre oficial del campo y sus excepciones por tipo). Representación gráfica con **DomPDF** (PHP puro: sin
+  navegador en el servidor, suficiente para documentos tabulares y soporta el ticket de 80 mm), en carta y ticket:
+  campos A siempre, B con valor, secciones B/D con guion, QR de consulta pública (PNG con GD), marca «SIN VALOR LEGAL —
+  AMBIENTE DE PRUEBAS» y aviso de contingencia. Archivo DTE = JSON firmado exacto + firmaElectronica + selloRecibido,
+  archivado inmutable ({NIT}/{AAAA}/{MM}/{código}.json/.pdf) con SHA-256; solo la versión de contingencia se completa
+  con el sello. Correo de entrega sin publicidad con ambos adjuntos; job `EntregarDte` (cola «entrega») al obtener el
+  sello o al entrar en contingencia. Portal público con enlaces firmados sin vencimiento. 232 pruebas en verde.
+  - La revisión de las instantáneas encontró y corrigió: claves reordenadas por jsonb (se usa el texto exacto),
+    municipio/distrito buscados sin su departamento y montos en cero mostrados como guion.
+  - Pendiente para el Paso 9: subir el logo de la empresa desde el panel (la representación ya lo admite: `empresas.logo_path`).

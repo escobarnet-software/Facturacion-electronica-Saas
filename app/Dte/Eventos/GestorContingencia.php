@@ -90,6 +90,9 @@ final class GestorContingencia
             'contingencia_id' => $contingencia->id,
         ])->save();
 
+        // Se entrega al receptor en estado transitorio, con el aviso de contingencia (Normativa 13.2).
+        TransmisorDte::entregar($dte);
+
         return $contingencia;
     }
 

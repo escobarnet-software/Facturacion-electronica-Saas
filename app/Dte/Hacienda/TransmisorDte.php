@@ -9,6 +9,7 @@ use App\Dte\Excepciones\DteException;
 use App\Dte\Firma\FirmadorClient;
 use App\Dte\Validacion\ValidadorEsquema;
 use App\Enums\EstadoDte;
+use App\Jobs\EntregarDte;
 use App\Models\Dte;
 use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
@@ -153,6 +154,7 @@ final class TransmisorDte
                 ],
                 respuesta: $r,
             );
+            self::entregar($dte);
 
             return $dte;
         }
@@ -169,6 +171,14 @@ final class TransmisorDte
         }
 
         throw new HaciendaException('Hacienda devolvió una respuesta inesperada (estado: '.json_encode($estado).').');
+    }
+
+    /** Archiva y entrega al receptor (cola «entrega»), si la entrega automática está activa. */
+    public static function entregar(Dte $dte): void
+    {
+        if (config('dte.entrega.automatica')) {
+            EntregarDte::dispatch($dte->empresa_id, $dte->id)->afterCommit();
+        }
     }
 
     private function anotar(Dte $dte, string $motivo): void

@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.3",
         "ext-bcmath": "*",
+        "barryvdh/laravel-dompdf": "^3.1",
         "laravel/fortify": "^1.42",
         "laravel/framework": "^13.17",
         "laravel/horizon": "^5.51",
@@ -18,6 +19,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "khanamiryan/qrcode-detector-decoder": "^2.0",
         "larastan/larastan": "^3.14",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
@@ -25,7 +27,8 @@
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^4.7",
-        "pestphp/pest-plugin-laravel": "^4.1"
+        "pestphp/pest-plugin-laravel": "^4.1",
+        "smalot/pdfparser": "^2.13"
     },
     "autoload": {
         "psr-4": {

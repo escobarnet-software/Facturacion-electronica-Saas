@@ -2,7 +2,10 @@
 
 use App\Dte\Contribuyente\CreditoFiscalBuilder;
 use App\Dte\Contribuyente\DocumentoContribuyente;
+use App\Dte\Contribuyente\DocumentoRelacionado;
 use App\Dte\Contribuyente\Linea;
+use App\Dte\Contribuyente\NotaCreditoBuilder;
+use App\Dte\Contribuyente\NotaDebitoBuilder;
 use App\Dte\Contribuyente\NotaRemisionBuilder;
 use App\Dte\Contribuyente\ReceptorContribuyente;
 use App\Dte\Correlativos\Correlativos;
@@ -101,7 +104,7 @@ function crearDteDePrueba(array $d, string $estado = 'borrador'): Dte
         departamento: '06', municipio: '23', distrito: '14', complemento: 'Colonia Escalón, San Salvador',
         telefono: '22223333', correo: 'ventas@pupuseria.test', codEstable: 'M001', codPuntoVenta: 'P001',
     );
-    $fecha = new DateTimeImmutable('now', new DateTimeZone('America/El_Salvador'));
+    $fecha = CarbonImmutable::now('America/El_Salvador')->toDateTimeImmutable();
     $correlativo = app(Correlativos::class)
         ->siguiente($d['empresa'], '01', $d['establecimiento'], $d['puntoVenta'], $fecha);
 
@@ -142,13 +145,22 @@ function crearDteDeTipo(array $d, string $tipo): Dte
         departamento: '06', municipio: '23', distrito: '14', complemento: 'San Salvador',
         telefono: '22223333', correo: 'dte@empresa.test', codEstable: 'M001', codPuntoVenta: 'P001',
     );
-    $fecha = new DateTimeImmutable('now', new DateTimeZone('America/El_Salvador'));
+    $fecha = CarbonImmutable::now('America/El_Salvador')->toDateTimeImmutable();
     $n = app(Correlativos::class)->siguiente($e, $tipo, $d['establecimiento'], $d['puntoVenta'], $fecha);
     $cliente = new ReceptorContribuyente('06140101851014', '765432', 'CLIENTE DE PRUEBA, S.A. DE C.V.', '46900', 'Venta al por mayor', '06', '23', '14', 'San Salvador', 'cliente@prueba.test');
     $doc = fn (array $extra = []) => new DocumentoContribuyente([Linea::gravada('Mercadería de prueba', '1', '100.00')], $cliente, $n, $fecha, ...$extra);
     $especial = fn (string $clase) => new $clase;
 
+    $relacionado = new DocumentoRelacionado('03', 'AC54E9DB-79C5-42CE-B430-EC552C97EFBA', $fecha);
+    $ajuste = fn () => new DocumentoContribuyente([Linea::gravada('Ajuste de prueba', '1', '10.00', '0', null, 'AC54E9DB-79C5-42CE-B430-EC552C97EFBA')], $cliente, $n, $fecha, relacionados: [$relacionado]);
+
+    if ($tipo === '01') {
+        return crearDteDePrueba($d);
+    }
+
     $armado = match ($tipo) {
+        '05' => (new NotaCreditoBuilder($emisor))->construir($ajuste()),
+        '06' => (new NotaDebitoBuilder($emisor))->construir($ajuste()),
         '03' => (new CreditoFiscalBuilder($emisor))->construir($doc()),
         '04' => (new NotaRemisionBuilder($emisor))->construir($doc(['bienTitulo' => '04'])),
         '07' => $especial(RetencionBuilder::class)->construir($emisor, $cliente, [['tipoDte' => '03', 'tipoGeneracion' => 1, 'numeroDocumento' => '123456', 'fechaEmision' => $fecha->format('Y-m-d'), 'montoSujetoGrav' => '100.00', 'codigoRetencionMH' => '22']], $n, $fecha),

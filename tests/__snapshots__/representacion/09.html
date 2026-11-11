@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>DOCUMENTO CONTABLE DE LIQUIDACIÓN</title>
+<style>
+    @page { margin: 28pt; }
+    body { font-family: DejaVu Sans, sans-serif; font-size: 8pt; color: #111; }
+    h1 { font-size: 13pt; margin: 0 0 2pt; text-align: center; }
+    h2 { font-size: 9pt; background: #e9edf2; padding: 2pt 4pt; margin: 6pt 0 3pt; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 1.5pt 3pt; vertical-align: top; }
+    .datos td:first-child { width: 40%; color: #444; }
+    .tabla th { background: #f2f4f7; border: 0.5pt solid #bbb; font-weight: bold; text-align: left; }
+    .tabla td { border: 0.5pt solid #ccc; }
+    .num { text-align: right; white-space: nowrap; }
+    .centro { text-align: center; }
+    .aviso { border: 1pt solid #b42318; color: #b42318; padding: 3pt; margin: 4pt 0; text-align: center; font-weight: bold; }
+    .marca { position: fixed; top: 38%; left: -10%; width: 120%; text-align: center; font-size: 30pt;
+             color: rgba(180, 35, 24, 0.22); transform: rotate(-30deg); font-weight: bold; z-index: 1000; }
+    .qr img { width: 96pt; }
+</style>
+</head>
+<body>
+    <div class="marca">SIN VALOR LEGAL — AMBIENTE DE PRUEBAS</div>
+
+<table>
+    <tr>
+                <td>
+            <div class="centro">DOCUMENTO TRIBUTARIO ELECTRÓNICO</div>
+            <h1>DOCUMENTO CONTABLE DE LIQUIDACIÓN</h1>
+            <div class="centro">Versión 2</div>
+        </td>
+        <td class="qr centro" style="width: 25%"><img src="[QR]" alt="QR de consulta pública"></td>    </tr>
+</table>
+
+    <div class="aviso">SIN VALOR LEGAL — AMBIENTE DE PRUEBAS</div>
+
+<h2>IDENTIFICACIÓN</h2>
+<table class="datos">
+            <tr><td>Código de Generación</td><td>[CODIGO]</td></tr>
+            <tr><td>Número de Control</td><td>[NUMERO_CONTROL]</td></tr>
+            <tr><td>Sello de Recepción</td><td>[SELLO]</td></tr>
+            <tr><td>Modelo de Facturación</td><td>Modelo Facturación previo</td></tr>
+            <tr><td>Tipo de Transmisión</td><td>Transmisión normal</td></tr>
+            <tr><td>Fecha y Hora de Generación</td><td>11/11/2026 09:30:00</td></tr>
+            <tr><td>Fecha y Hora de Procesamiento</td><td>11/11/2026 09:31:00</td></tr>
+    </table>
+
+<h2>EMISOR</h2>
+<table class="datos">
+            <tr><td>NIT (Emisor)</td><td>[NIT]</td></tr>
+            <tr><td>NRC (Emisor)</td><td>[NRC]</td></tr>
+            <tr><td>Nombre (Emisor)</td><td>[EMPRESA]</td></tr>
+            <tr><td>Actividad económica (Emisor)</td><td>Venta al por mayor de otros productos</td></tr>
+            <tr><td>Nombre comercial (Emisor)</td><td>[COMERCIAL]</td></tr>
+            <tr><td>Teléfono (Emisor)</td><td>22223333</td></tr>
+            <tr><td>Correo electrónico (Emisor)</td><td>dte@empresa.test</td></tr>
+            <tr><td>Dirección Departamento (Emisor)</td><td>06 - San Salvador</td></tr>
+            <tr><td>Dirección Municipio (Emisor)</td><td>23 - SAN SALVADOR CENTRO</td></tr>
+            <tr><td>Dirección Distrito (Emisor)</td><td>14 - SAN SALVADOR</td></tr>
+            <tr><td>Dirección complemento (Emisor)</td><td>San Salvador</td></tr>
+    </table>
+
+<h2>RECEPTOR</h2>
+<table class="datos">
+            <tr><td>NIT (Receptor)</td><td>06140101851014</td></tr>
+            <tr><td>NRC (Receptor)</td><td>-</td></tr>
+            <tr><td>Nombre (Receptor)</td><td>AFILIADO DE PRUEBA</td></tr>
+            <tr><td>Actividad Económica (Receptor)</td><td>Restaurantes</td></tr>
+            <tr><td>Tipo de establecimiento (Receptor)</td><td>02 - Casa Matriz</td></tr>
+            <tr><td>Correo electrónico (Receptor)</td><td>afiliado@prueba.test</td></tr>
+    </table>
+
+        
+
+
+<h2>RESUMEN</h2>
+<table class="datos">
+            <tr><td>Fecha inicio del período de liquidación</td><td class="num">01/11/2026</td></tr>
+            <tr><td>Fecha fin del período de liquidación</td><td class="num">11/11/2026</td></tr>
+            <tr><td>Valor de las operaciones a liquidar</td><td class="num">$113.00</td></tr>
+            <tr><td>Sub total</td><td class="num">$113.00</td></tr>
+            <tr><td>IVA de las operaciones a liquidar</td><td class="num">$13.00</td></tr>
+            <tr><td>Monto sujeto a percepción sin IVA</td><td class="num">$100.00</td></tr>
+            <tr><td>IVA percibido (2%)</td><td class="num">$2.00</td></tr>
+            <tr><td>Comisión</td><td class="num">$0.00</td></tr>
+            <tr><td>Porcentaje de comisión</td><td class="num">0</td></tr>
+            <tr><td>IVA de la comisión</td><td class="num">$0.00</td></tr>
+            <tr><td>Valor líquido a pagar al afiliado</td><td class="num">$111.00</td></tr>
+                <tr><td>Valor en letras</td><td>CIENTO ONCE CON 00/100 DÓLARES</td></tr>
+    </table>
+
+    <h2>EXTENSIÓN</h2>
+    <table class="datos">
+                    <tr><td>Nombre del responsable de generar el DTE</td><td>Persona de prueba</td></tr>
+                    <tr><td>Documento de identificación de quien genera el DTE</td><td>012345678</td></tr>
+            </table>
+
+
+<div class="centro" style="margin-top: 4pt; font-size: 7pt">
+    Consulte este documento en el sitio del Ministerio de Hacienda escaneando el código QR o en:<br>https://admin.factura.gob.sv/consultaPublica?ambiente=00&amp;codGen=[CODIGO]&amp;fechaEmi=2026-11-11
+</div>
+</body>
+</html>

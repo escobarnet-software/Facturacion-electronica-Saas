@@ -82,6 +82,12 @@ return [
     // Carpeta con los JSON Schemas oficiales (descargados de factura.gob.sv).
     'esquemas' => resource_path('schemas'),
 
+    // Archivo inmutable de los DTE (JSON + PDF): disco S3 con versionado y object lock.
+    'archivo' => ['disco' => env('DTE_ARCHIVO_DISCO', 's3')],
+
+    // Al obtener el sello (o entrar en contingencia) se archiva y se entrega al receptor (cola «entrega»).
+    'entrega' => ['automatica' => (bool) env('DTE_ENTREGA_AUTOMATICA', true)],
+
     // Llave dedicada para cifrar los secretos de los clientes (separada de APP_KEY).
     'secrets_key' => env('DTE_SECRETS_KEY'),
 
@@ -89,6 +95,9 @@ return [
 
     // codigoMsg de Hacienda → mensaje simple en español.
     'mensajes_mh' => require __DIR__.'/dte/mensajes_mh.php',
+
+    // Campos y su letra de representación gráfica (Anexo II).
+    'campos' => require __DIR__.'/dte/campos.php',
 
     // Días no hábiles para los plazos (10.º día hábil del mes siguiente).
     'feriados' => require __DIR__.'/dte/feriados.php',
