@@ -22,6 +22,9 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Feature');
 
+// Concurrencia: procesos reales con conexiones propias, sin la transacción de RefreshDatabase.
+pest()->extend(TestCase::class)->in('Concurrencia');
+
 function tenancy(): Tenancy
 {
     return app(Tenancy::class);

@@ -1,8 +1,10 @@
 <?php
 
+use App\Dte\Correlativos\Correlativos;
 use App\Enums\Rol;
 use App\Jobs\Middleware\ConEmpresa;
 use App\Models\Bitacora;
+use App\Models\Correlativo;
 use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
 use App\Models\EmpresaUsuario;
@@ -15,14 +17,17 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
     $this->b = crearEmpresaDePrueba();
 
     foreach ([$this->a, $this->b] as $datos) {
-        tenancy()->ejecutarComo($datos['empresa']->id, fn () => Bitacora::registrar('prueba.creada'));
+        tenancy()->ejecutarComo($datos['empresa']->id, function () use ($datos) {
+            Bitacora::registrar('prueba.creada');
+            app(Correlativos::class)->siguiente($datos['empresa'], '01', $datos['establecimiento'], $datos['puntoVenta'], now());
+        });
     }
 });
 
@@ -44,7 +49,7 @@ it('por Eloquent, la empresa A solo ve sus propios datos', function () {
     tenancy()->establecer($this->a['empresa']->id);
     $idA = $this->a['empresa']->id;
 
-    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class] as $modelo) {
+    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class] as $modelo) {
         $empresas = $modelo::query()->pluck('empresa_id')->unique()->values()->all();
         expect($empresas)->toBe([$idA], "{$modelo} filtró datos de otra empresa");
     }
@@ -92,7 +97,7 @@ it('por SQL directo, la empresa A no puede insertar, modificar ni borrar datos d
         "INSERT INTO empresa_credenciales (empresa_id, ambiente, usuario_api, pwd_api, pwd_privada) VALUES (?, '01', 'x', 'x', 'x')", [$idB],
     ));
 
-    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales'] as $tabla) {
+    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos'] as $tabla) {
         expect(DB::update("UPDATE {$tabla} SET updated_at = now() WHERE empresa_id = ?", [$idB]))->toBe(0, "Se modificó {$tabla} de B")
             ->and(DB::delete("DELETE FROM {$tabla} WHERE empresa_id = ?", [$idB]))->toBe(0, "Se borró {$tabla} de B");
     }

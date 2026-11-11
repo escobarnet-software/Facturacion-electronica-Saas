@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -184,3 +184,13 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - `totalLetras` sigue el formato del Manual Funcional oficial («SETECIENTOS CATORCE CON 95/100 DÓLARES»); el ejemplo
     de ESPECIFICACION §6.5 («… DÓLARES CON … CENTAVOS») no coincide con el manual, así que manda el manual.
   - Se corrigió un comentario de `CodigoGeneracion` que decía que un rechazo lleva código nuevo (ESPECIFICACION §5.1: mismo código).
+- **Paso 3 (2026-11-11):** catálogos oficiales CAT-001 a CAT-033 (Excel V 1.1, 1681 valores) en la tabla genérica
+  `cat_valores` (datos comunes, sin RLS), seeder idempotente y `dte:catalogos:actualizar [archivo] [--aplicar]`
+  (muestra nuevos, cambiados y retirados; lo retirado se marca no vigente, no se borra).
+  - El Excel no trae departamento para distritos (CAT-008) ni municipios (CAT-013): se deduce (los distritos reinician
+    en 01 por departamento; los municipios empiezan con el nombre del departamento). CAT-015 repite D4/D5 en las
+    secciones 1 y 2: se guardan con la sección como agrupador.
+  - Correlativos con `SELECT … FOR UPDATE`, reinicio anual por la fecha de emisión en hora de El Salvador y los modos
+    `por_tipo` (defecto), `por_establecimiento` y `centralizado` (TODO(normativa): decisión pendiente nº 1).
+    El correlativo se toma en su propia transacción, fuera de la emisión, para no reutilizar números.
+  - 50 procesos concurrentes reales obtienen 50 números distintos y consecutivos. 92 pruebas en verde.

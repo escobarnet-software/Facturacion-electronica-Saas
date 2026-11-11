@@ -30,6 +30,16 @@ class Empresa extends Model
 
     protected $guarded = ['id'];
 
+    /** Los mismos valores por defecto de la migración, también en el modelo recién creado. */
+    protected $attributes = [
+        'ambiente' => '00',
+        'modo_correlativo' => 'por_tipo',
+        'tipo_contribuyente' => 'otro',
+        'agente_retencion' => false,
+        'agente_percepcion' => false,
+        'estado' => 'activa',
+    ];
+
     protected function casts(): array
     {
         return [
