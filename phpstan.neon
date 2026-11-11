@@ -9,3 +9,6 @@ parameters:
         - database
         - routes
     tmpDir: storage/framework/phpstan
+    # Los builders validan en tiempo de ejecución datos que llegan de la API/POS
+    # aunque el PHPDoc diga el tipo esperado: esas defensas no son código muerto.
+    treatPhpDocTypesAsCertain: false

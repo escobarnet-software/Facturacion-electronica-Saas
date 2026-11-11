@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -177,3 +177,10 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   Secretos cifrados con `DTE_SECRETS_KEY` (AES-256-GCM, distinta de APP_KEY), ocultos en toArray/toJson/logs/var_dump,
   `#[\SensitiveParameter]`; certificados `{NIT}.crt` en disco privado con permisos 600. Bitácora append-only con trigger
   que rechaza UPDATE/DELETE/TRUNCATE. 37 pruebas en verde.
+- **Paso 2 (2026-11-11):** motor del Paso 1 integrado (`app/Dte/`), sin reescribirlo. `Decimal` y `DteJson` pasan a
+  `App\Support` (como exige CLAUDE.md). `RegistroEsquemas` + `ValidadorEsquema` (opis/json-schema) para los 11 DTE y
+  4 eventos, por tipo y versión. Pruebas: las 30 del Paso 1 + UUID, `NumeroALetras` (0.01, 1, 21, 100, 1,000,000.99),
+  validación positiva y negativa de esquema. 77 pruebas en verde.
+  - `totalLetras` sigue el formato del Manual Funcional oficial («SETECIENTOS CATORCE CON 95/100 DÓLARES»); el ejemplo
+    de ESPECIFICACION §6.5 («… DÓLARES CON … CENTAVOS») no coincide con el manual, así que manda el manual.
+  - Se corrigió un comentario de `CodigoGeneracion` que decía que un rechazo lleva código nuevo (ESPECIFICACION §5.1: mismo código).
