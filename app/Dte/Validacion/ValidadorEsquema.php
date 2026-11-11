@@ -48,6 +48,8 @@ final class ValidadorEsquema
 
         $validator = new Validator;
         $validator->setMaxErrors(50);
+        // multipleOf exacto (ver MultiploExacto): sin esto, 7039.90 «no es múltiplo de 0.01».
+        $validator->parser()->addDraft(new Draft07Exacto);
         $resultado = $validator->validate($documento, $this->cache[$ruta]);
 
         if ($resultado->isValid()) {

@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -205,3 +205,15 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
     incluye «Bearer»; `idEnvio` es entero en recepción/invalidación y UUID en lotes; el MTIST no exige un User-Agent concreto.
   - **PENDIENTE:** la prueba real del grupo `hacienda-pruebas` (sello real de una FE) espera las credenciales de
     pruebas de Hacienda y el certificado `.crt` del usuario. Con `Http::fake` todo pasa.
+- **Paso 5 (2026-11-11):** builders de CCF (03, v4), NR (04, v4), NC (05, v4) y ND (06, v4) sobre una calculadora común
+  (`app/Dte/Contribuyente/`): ventas gravadas/exentas/no sujetas, descuento por ítem y global (porcentaje o monto),
+  montos no afectos (cargos/abonos), ítems de «otros tributos» (tipo 4), retención y percepción del 1 %, documentos
+  relacionados, y en NC/ND el IVA, la percepción y la retención por ítem. Cuadran al centavo: $7,039.90, $2,599.00,
+  $761.20 y $107.35 (CCF) y $95.80 (NC). Los 4 tipos validan contra su esquema oficial. 128 pruebas en verde.
+  - Los esquemas v4 nombran los campos `ivaPerci` e `ivaRete` (ESPECIFICACION decía `ivaPerci1`/`ivaRete1`): manda el esquema.
+  - El ejemplo del Manual Funcional imprime «Total de Descuentos $113.50»; la suma correcta es $112.50 y así se calcula.
+  - TODO(normativa): cuándo aplicar la retención/percepción del 1 % (agentes, montos mínimos) no está en los manuales;
+    por ahora lo indica quien emite (`retenerIva1`, `percibirIva1`).
+  - Se corrigió la validación de esquemas: el `multipleOf` de Opis fallaba con montos correctos por el error de coma
+    flotante (7039.90 «no es múltiplo de 0.01»). Ahora se compara en decimal exacto (`MultiploExacto`) y `ext-bcmath`
+    es obligatoria en `composer.json`.
