@@ -25,6 +25,9 @@ class EmpresaFactory extends Factory
             'ambiente' => '00',
             'correo' => fake()->companyEmail(),
             'telefono' => '22223333',
+            'responsable_nombre' => 'Responsable de Prueba',
+            'responsable_tipo_doc' => '13',
+            'responsable_num_doc' => '012345678',
         ];
     }
 }

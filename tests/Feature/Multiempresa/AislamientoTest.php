@@ -1,10 +1,12 @@
 <?php
 
 use App\Dte\Correlativos\Correlativos;
+use App\Dte\Support\CodigoGeneracion;
 use App\Enums\EstadoDte;
 use App\Enums\Rol;
 use App\Jobs\Middleware\ConEmpresa;
 use App\Models\Bitacora;
+use App\Models\Contingencia;
 use App\Models\Correlativo;
 use App\Models\Dte;
 use App\Models\DteEventoInterno;
@@ -12,6 +14,8 @@ use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
 use App\Models\EmpresaUsuario;
 use App\Models\Establecimiento;
+use App\Models\Evento;
+use App\Models\Lote;
 use App\Models\PuntoVenta;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
@@ -31,6 +35,9 @@ beforeEach(function () {
             Bitacora::registrar('prueba.creada');
             app(Correlativos::class)->siguiente($datos['empresa'], '01', $datos['establecimiento'], $datos['puntoVenta'], now());
             crearDteDePrueba($datos)->transicionar(EstadoDte::Validado, 'prueba');
+            $c = Contingencia::query()->create(['ambiente' => '00', 'inicio' => now(), 'tipo' => 1]);
+            Evento::query()->create(['tipo' => 'contingencia', 'version' => 4, 'ambiente' => '00', 'codigo_generacion' => CodigoGeneracion::nuevo(), 'estado' => 'borrador', 'json_texto' => '{}', 'json_original' => []]);
+            Lote::query()->create(['contingencia_id' => $c->id, 'id_envio' => CodigoGeneracion::nuevo(), 'estado' => 'recibido', 'dte_ids' => []]);
         });
     }
 });
@@ -53,7 +60,7 @@ it('por Eloquent, la empresa A solo ve sus propios datos', function () {
     tenancy()->establecer($this->a['empresa']->id);
     $idA = $this->a['empresa']->id;
 
-    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class, Dte::class, DteEventoInterno::class] as $modelo) {
+    foreach ([Establecimiento::class, PuntoVenta::class, EmpresaCredencial::class, EmpresaUsuario::class, Bitacora::class, Correlativo::class, Dte::class, DteEventoInterno::class, Evento::class, Contingencia::class, Lote::class] as $modelo) {
         $empresas = $modelo::query()->pluck('empresa_id')->unique()->values()->all();
         expect($empresas)->toBe([$idA], "{$modelo} filtró datos de otra empresa");
     }
@@ -104,7 +111,7 @@ it('por SQL directo, la empresa A no puede insertar, modificar ni borrar datos d
     expect(DB::update("UPDATE dte_eventos_internos SET motivo = 'alterado' WHERE empresa_id = ?", [$idB]))->toBe(0)
         ->and(DB::delete('DELETE FROM dte_eventos_internos WHERE empresa_id = ?', [$idB]))->toBe(0);
 
-    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos', 'dtes'] as $tabla) {
+    foreach (['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'correlativos', 'dtes', 'eventos', 'contingencias', 'lotes'] as $tabla) {
         expect(DB::update("UPDATE {$tabla} SET updated_at = now() WHERE empresa_id = ?", [$idB]))->toBe(0, "Se modificó {$tabla} de B")
             ->and(DB::delete("DELETE FROM {$tabla} WHERE empresa_id = ?", [$idB]))->toBe(0, "Se borró {$tabla} de B");
     }

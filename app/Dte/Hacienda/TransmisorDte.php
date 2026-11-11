@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dte\Hacienda;
 
+use App\Dte\Eventos\GestorContingencia;
 use App\Dte\Excepciones\DteException;
 use App\Dte\Firma\FirmadorClient;
 use App\Dte\Validacion\ValidadorEsquema;
@@ -51,7 +52,28 @@ final class TransmisorDte
             throw new LogicException("Un DTE en estado {$dte->estado->value} no se transmite.");
         }
 
-        return $this->transmitir($dte, new HaciendaClient($empresa, $credencial));
+        $contingencias = app(GestorContingencia::class);
+
+        // Con una contingencia abierta no se insiste con Hacienda: el documento entra directo a la contingencia.
+        if ($contingencias->activa($credencial->ambiente) !== null && $contingencias->admite($dte->tipo)) {
+            $dte->transicionar(EstadoDte::Transitorio, 'Emitido durante una contingencia activa');
+            $contingencias->registrar($dte, $empresa, $credencial);
+
+            return $dte;
+        }
+
+        $this->transmitir($dte, new HaciendaClient($empresa, $credencial));
+
+        if ($dte->estado === EstadoDte::Transitorio) {
+            if ($contingencias->admite($dte->tipo)) {
+                $contingencias->registrar($dte, $empresa, $credencial);
+            } else {
+                // CL, DCL, CD, NC/ND sobre CR… no se emiten en contingencia: se reintentará el envío normal.
+                $dte->transicionar(EstadoDte::Firmado, 'Este tipo de documento no admite contingencia: se reintentará el envío');
+            }
+        }
+
+        return $dte;
     }
 
     public function firmar(Dte $dte, Empresa $empresa, EmpresaCredencial $credencial): void
@@ -110,7 +132,7 @@ final class TransmisorDte
     /**
      * @param  array<string, mixed>  $r
      */
-    private function aplicarRespuesta(Dte $dte, array $r, string $origen): Dte
+    public function aplicarRespuesta(Dte $dte, array $r, string $origen): Dte
     {
         $estado = $r['estado'] ?? null;
         $observaciones = array_values(array_filter(

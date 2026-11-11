@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -229,3 +229,21 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
     Normativa: los aporta quien emite. FSE — porcentaje de la retención de renta (10 % por defecto, sobre servicios).
     CR — «IVA 13 %» del resumen se calcula como monto sujeto × 13 % para todos los códigos de retención.
   - **PENDIENTE:** transmisión real de cada tipo (grupo `hacienda-pruebas`, ya escrita): espera las credenciales de pruebas.
+- **Paso 7 (2026-11-11):** eventos en `app/Dte/Eventos/`. Tablas `eventos`, `contingencias` y `lotes` (con RLS).
+  - `Plazos`: días hábiles (asuetos del Código de Trabajo art. 190 y Jueves/Viernes/Sábado Santo, configurables en
+    `config/dte/feriados.php`), Cuadro 6 (10.º día hábil del mes siguiente; 3 meses; 2 años medicamentos perecederos),
+    retorno (3 meses), operaciones especiales, contingencia (24 h / 72 h). Pruebas de borde: último día válido y primer inválido.
+  - Invalidación (esquema v3): solo con sello, dentro de plazo («FECHA FUERA DE PLAZO PERMITIDO»), documento que
+    reemplaza ya sellado para los tipos 1 y 3 (salvo NC y CL); con sello el original queda «invalidado».
+  - Contingencia completa: tras la política de reintentos el documento se re-genera en modo contingencia (modelo 2,
+    operación 2, mismo código) y se re-firma; con contingencia abierta los nuevos entran directo. Comando
+    `dte:contingencia:procesar` cada 15 min (scheduler): prueba Hacienda → cierra → Evento de Contingencia (v4) →
+    lotes de 100 → consulta de lotes → «transmitido». Alerta y borrador del Informe Técnico a los 3 días.
+    Simulación de 3 horas sin servicio: termina con todos los documentos transmitidos.
+  - Retorno (fe-eret v1) para FE, FEX y FSE: no supera lo vendido, deja el original «ajustado» (no invalidado).
+    Operaciones especiales (fe-eop v1) por rangos.
+  - Las pruebas bloquean toda petición HTTP no simulada (`Http::preventStrayRequests`): nunca se contacta a Hacienda.
+  - TODO(normativa): el MTIST no detalla el servicio para retorno y operaciones especiales: se envían por
+    `recepciondte` con tipoDte 18 y 17. Confirmar si Semana Santa completa, fiestas agostinas o el cierre de fin de año
+    son inhábiles. Los datos del responsable (nombre y documento) se agregaron a `empresas` porque los exige el evento.
+  - 220+ pruebas en verde.

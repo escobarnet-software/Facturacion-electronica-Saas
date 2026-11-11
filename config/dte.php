@@ -89,4 +89,7 @@ return [
 
     // codigoMsg de Hacienda → mensaje simple en español.
     'mensajes_mh' => require __DIR__.'/dte/mensajes_mh.php',
+
+    // Días no hábiles para los plazos (10.º día hábil del mes siguiente).
+    'feriados' => require __DIR__.'/dte/feriados.php',
 ];

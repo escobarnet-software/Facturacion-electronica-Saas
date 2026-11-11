@@ -161,6 +161,7 @@ it('timeout, la consulta no lo encuentra y el reenvío funciona (mismo código d
 it('timeout en el envío y en 2 reenvíos: pasa a contingencia (transitorio)', function () {
     $envios = $consultas = 0;
     Http::fake([
+        '*firmardocumento*' => Http::response(['status' => 'OK', 'body' => 'eyJhbGciOiJSUzUxMiJ9.Y29udGluZ2VuY2lh.ZmlybWE']),
         URL_AUTH => Http::response(authOk()),
         URL_RECEPCION => function () use (&$envios) {
             $envios++;

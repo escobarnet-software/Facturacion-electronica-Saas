@@ -17,6 +17,7 @@ use App\Dte\Modelos\Emisor;
 use App\Dte\Modelos\LineaVenta;
 use App\Dte\Modelos\Receptor;
 use App\Dte\Modelos\Venta;
+use App\Enums\EstadoDte;
 use App\Enums\Rol;
 use App\Models\Dte;
 use App\Models\Empresa;
@@ -25,6 +26,7 @@ use App\Models\Establecimiento;
 use App\Models\PuntoVenta;
 use App\Models\Usuario;
 use App\Tenancy\Tenancy;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -163,5 +165,27 @@ function crearDteDeTipo(array $d, string $tipo): Dte
         'codigo_generacion' => $armado->codigoGeneracion, 'numero_control' => $armado->numeroControl,
         'fecha_emision' => $fecha->format('Y-m-d'), 'hora_emision' => $fecha->format('H:i:s'), 'estado' => 'borrador',
         'json_texto' => $armado->json, 'json_original' => $armado->documento(),
+    ]);
+}
+
+/** Deja un DTE de prueba como transmitido, con sello y fecha de procesamiento (hora de El Salvador). */
+function sellarDte(Dte $dte, string $fechaSello): Dte
+{
+    $dte->forceFill([
+        'estado' => EstadoDte::Transmitido,
+        'sello_recibido' => strtoupper(substr(hash('sha256', $dte->codigo_generacion), 0, 40)),
+        'fh_procesamiento' => CarbonImmutable::parse($fechaSello, 'America/El_Salvador'),
+        'jws' => $dte->jws ?? 'eyJhbGciOiJSUzUxMiJ9.FALSO.FIRMA',
+    ])->save();
+
+    return $dte->refresh();
+}
+
+/** Dte sin guardar, solo para calcular plazos. */
+function dteParaPlazos(string $tipo, string $fechaSello, bool $medicamento = false): Dte
+{
+    return (new Dte)->forceFill([
+        'tipo' => $tipo, 'sello_recibido' => str_repeat('A', 40), 'medicamento_perecedero' => $medicamento,
+        'fh_procesamiento' => CarbonImmutable::parse($fechaSello, 'America/El_Salvador'),
     ]);
 }

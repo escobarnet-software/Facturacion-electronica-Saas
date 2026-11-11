@@ -35,6 +35,9 @@ use Illuminate\Support\Facades\Auth;
  * @property array<string, mixed>|null $respuesta_mh
  * @property list<string>|null $observaciones_mh
  * @property int $envios
+ * @property int|null $contingencia_id
+ * @property int|null $lote_id
+ * @property bool $medicamento_perecedero
  */
 class Dte extends Model
 {
@@ -57,6 +60,7 @@ class Dte extends Model
             'modelo' => 'integer',
             'operacion' => 'integer',
             'envios' => 'integer',
+            'medicamento_perecedero' => 'boolean',
         ];
     }
 
