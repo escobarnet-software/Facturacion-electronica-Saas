@@ -160,4 +160,11 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [ ] Paso 0 · [ ] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [ ] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+
+#### Notas de estado
+- **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
+  `docker-compose.yml` con PostgreSQL 17 (bases `dte` y `dte_test`), Redis, S3 local, firmador oficial (compilado desde
+  el código fuente de Hacienda) y Mailpit. `config/dte.php` con URL, timeouts, reintentos, horas de token y tamaño de lote.
+  - MinIO ya no publica imágenes en Docker Hub: el S3 local es **SeaweedFS** (mismo protocolo S3).
+  - Esquemas oficiales descargados: 15/15 en `resources/schemas/`. **FEX es versión 3** (la Normativa dice 2; manda el esquema).

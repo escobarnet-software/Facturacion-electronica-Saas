@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "dte-local",
+      "credentials": [
+        {"accessKey": "dte-s3", "secretKey": "dte-s3-secret"}
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
