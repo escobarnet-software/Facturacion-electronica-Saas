@@ -11,6 +11,7 @@ use App\Models\Contingencia;
 use App\Models\Correlativo;
 use App\Models\Dte;
 use App\Models\DteEventoInterno;
+use App\Models\DteRecibido;
 use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
 use App\Models\EmpresaUsuario;
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas', 'dte_recibidos'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
@@ -44,6 +45,7 @@ beforeEach(function () {
             Producto::query()->create(['descripcion' => 'Producto', 'precio' => '1']);
             Cliente::query()->create(['tipo_documento' => '13', 'num_documento' => '012345678', 'nombre' => 'Cliente']);
             PruebaMinima::query()->create(['tipo' => '01', 'requeridas' => 90]);
+            DteRecibido::query()->create(['tipo' => '03', 'codigo_generacion' => CodigoGeneracion::nuevo(), 'numero_control' => 'DTE-03-M001P001-000000000000001', 'fecha_emision' => now()->toDateString(), 'emisor_nit' => '06140101851014', 'emisor_nombre' => 'Proveedor', 'sello_recibido' => str_repeat('A', 40), 'json_texto' => '{}', 'json_original' => [], 'firma_coincide' => true, 'origen' => 'subida']);
         });
     }
 });

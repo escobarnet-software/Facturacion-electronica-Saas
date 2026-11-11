@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\BuzonEntradaController;
 use App\Http\Controllers\DocumentoDescargaController;
 use App\Http\Controllers\EmpresaActivaController;
+use App\Http\Controllers\LibroDescargaController;
 use App\Http\Controllers\PortalDteController;
 use App\Livewire\Panel;
 use App\Models\Usuario;
@@ -15,6 +17,9 @@ Route::middleware('signed')->controller(PortalDteController::class)->group(funct
     Route::get('/dte/{codigo}/json', 'json')->name('dte.portal.json');
     Route::get('/dte/{codigo}/pdf', 'pdf')->name('dte.portal.pdf');
 });
+
+// Buzón de DTE recibidos (correo entrante reenviado por el proveedor de correo).
+Route::post('/buzon/{token}', BuzonEntradaController::class)->middleware('throttle:60,1')->name('buzon');
 
 Route::middleware('auth')->group(function () {
     // Pantalla para activar el doble factor (accesible aunque aún no lo tenga).
@@ -33,6 +38,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/productos', Panel\Productos::class)->name('panel.productos');
         Route::get('/panel/clientes', Panel\Clientes::class)->name('panel.clientes');
         Route::get('/panel/establecimientos', Panel\Establecimientos::class)->name('panel.establecimientos');
+        Route::get('/panel/recibidos', Panel\Recibidos::class)->name('panel.recibidos');
+        Route::get('/panel/reportes', Panel\Reportes::class)->name('panel.reportes');
+        Route::get('/panel/reportes/{libro}.{formato}', LibroDescargaController::class)
+            ->whereIn('libro', ['consumidor', 'contribuyentes', 'compras'])->whereIn('formato', ['csv', 'xlsx'])->name('panel.reportes.descargar');
         Route::get('/panel/configuracion', Panel\Onboarding::class)->name('panel.onboarding');
 
         Route::post('/empresa-activa', EmpresaActivaController::class)->name('empresa-activa');

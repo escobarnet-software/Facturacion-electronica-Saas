@@ -31,6 +31,8 @@
             <a href="{{ route('panel.caja') }}" class="hover:underline">Caja rápida</a>@endcan
             @can('ver-documentos')<a href="{{ route('panel.documentos') }}" class="hover:underline">Documentos</a>@endcan
             @can('invalidar')<a href="{{ route('panel.invalidaciones') }}" class="hover:underline">Invalidaciones</a>@endcan
+            @can('ver-libros')<a href="{{ route('panel.recibidos') }}" class="hover:underline">Recibidos</a>
+            <a href="{{ route('panel.reportes') }}" class="hover:underline">Libros de IVA</a>@endcan
             @can('ver-contingencia')<a href="{{ route('panel.contingencia') }}" class="hover:underline">Contingencia</a>@endcan
             @can('administrar-catalogos')
                 <a href="{{ route('panel.productos') }}" class="hover:underline">Productos</a>

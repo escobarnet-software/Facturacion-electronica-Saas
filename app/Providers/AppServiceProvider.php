@@ -39,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('invalidar', fn (Usuario $u) => in_array($rol($u), [Rol::Dueno, Rol::Contador], true));
         Gate::define('administrar-catalogos', fn (Usuario $u) => in_array($rol($u), [Rol::Dueno, Rol::Contador], true));
         Gate::define('administrar-empresa', fn (Usuario $u) => $rol($u) === Rol::Dueno);
+        Gate::define('ver-libros', fn (Usuario $u) => in_array($rol($u), [Rol::Dueno, Rol::Contador], true));
         Gate::define('ver-contingencia', fn (Usuario $u) => in_array($rol($u), [Rol::Dueno, Rol::Contador], true));
     }
 }

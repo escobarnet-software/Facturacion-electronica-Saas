@@ -99,6 +99,9 @@ return [
     // Pruebas mínimas para la autorización como emisor (Manual Funcional XXIV).
     'pruebas_minimas' => require __DIR__.'/dte/pruebas_minimas.php',
 
+    // DTE recibidos: verificación opcional en la consulta pública de Hacienda (sale a internet).
+    'recibidos' => ['verificar_publico' => (bool) env('DTE_RECIBIDOS_VERIFICAR_PUBLICO', false)],
+
     // Campos y su letra de representación gráfica (Anexo II).
     'campos' => require __DIR__.'/dte/campos.php',
 

@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -283,3 +283,14 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - En las pruebas el receptor contribuyente es la propia empresa (su NIT y NRC existen en Hacienda).
   - **PENDIENTE:** la ejecución real contra el ambiente de pruebas de Hacienda (por indicación del usuario, todo con
     Http::fake hasta que avise).
+- **Paso 11 (2026-11-11):** tabla `dte_recibidos` (RLS) e `ImportadorRecibidos`: exige archivo completo (JWS + sello de
+  40 caracteres), NIT del receptor = empresa, contenido idéntico al payload firmado (si se altera un monto, se rechaza),
+  esquema oficial, idempotente; rechaza los documentos emitidos por la propia empresa. Verificación opcional en la
+  consulta pública (`DTE_RECIBIDOS_VERIFICAR_PUBLICO`, apagada; en pruebas siempre `Http::fake`). Buzón de correo:
+  `POST /buzon/{token}` (MIME crudo, adjuntos `.json`, token secreto por empresa). `LibrosIva`: ventas a consumidor final
+  por día (FE + FEX), ventas a contribuyentes (CCF/ND, NC en negativo), compras (recibidos + FSE), retenciones y
+  percepciones, resumen F-07; solo estados vigentes (no cuentan invalidados, rechazados ni borradores). Exportación
+  CSV (`;`, UTF-8 con BOM) y XLSX. Pantallas «Recibidos» y «Libros de IVA» (dueño y contador).
+  - TODO(normativa): columnas exactas de los anexos del F-07 según el instructivo vigente; verificar la firma RSA del
+    JWS recibido requiere el certificado público del emisor (Hacienda no lo publica).
+  - Pendiente de hosting: elegir el proveedor de correo entrante que reenvía al buzón.
