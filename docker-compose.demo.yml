@@ -1,0 +1,100 @@
+# DEMO local completa, solo con Docker (Windows, macOS o Linux). Hacienda y el firmador están SIMULADOS:
+# nunca se contacta a Hacienda. Todo queda publicado solo en 127.0.0.1.
+#
+#   docker compose -f docker-compose.demo.yml up --build
+#
+# Luego abra http://localhost:8000 y entre con contador@demo.test y la contraseña de DEMO_CLAVE
+# (por defecto Demo2026!). Correos enviados: http://localhost:8025
+# Para borrar todo: docker compose -f docker-compose.demo.yml down -v
+name: escobarnet-dte-demo
+
+x-env: &env
+  APP_NAME: "Escobar Net DTE (demo)"
+  APP_ENV: local
+  APP_DEBUG: "true"
+  APP_URL: http://localhost:8000
+  APP_LOCALE: es
+  # Llaves SOLO para esta demo local (públicas en el repositorio): nunca usarlas en otro lugar.
+  APP_KEY: base64:KHfpbG38baQm08ZhLUP2celjZoRO1KLXZaR7HLrAthY=
+  DTE_SECRETS_KEY: base64:k7xwTzhFD0bW51GviSc1fS9VhEIXAfBeRFL1RnjUS8A=
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_DATABASE: dte
+  DB_USERNAME: dte_app
+  DB_PASSWORD: dte_app
+  REDIS_HOST: redis
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: database
+  MAIL_MAILER: smtp
+  MAIL_HOST: mailpit
+  MAIL_PORT: "1025"
+  LOG_CHANNEL: stderr
+  DTE_AMBIENTE: "00"
+  DTE_ARCHIVO_DISCO: local
+  DTE_SIMULADOR_URL: http://simulador:8899
+  DEMO_CLAVE: ${DEMO_CLAVE:-Demo2026!}
+
+x-app: &app
+  image: escobarnet-dte-app:demo
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment: {POSTGRES_DB: dte, POSTGRES_USER: dte, POSTGRES_PASSWORD: dte}
+    volumes:
+      - pgdemo:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dte -d dte"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:8025:8025"]
+
+  # Simulador de Hacienda (ambiente de pruebas) y del firmador.
+  simulador:
+    image: php:8.3-cli-alpine
+    command: ["php", "-S", "0.0.0.0:8899", "/sim/simulador.php"]
+    environment: {PHP_CLI_SERVER_WORKERS: "8", SIMULADOR_LATENCIA_MS: "50"}
+    volumes: ["./tests/Carga:/sim:ro"]
+
+  # Migra, carga los catálogos oficiales y crea la empresa demo; luego termina.
+  preparar:
+    <<: *app
+    environment: {<<: *env, ROL: demo}
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: "no"
+
+  web:
+    <<: *app
+    environment: {<<: *env, ROL: web}
+    ports: ["127.0.0.1:8000:8080"]
+    depends_on:
+      preparar: {condition: service_completed_successfully}
+
+  horizon:
+    <<: *app
+    environment: {<<: *env, ROL: horizon}
+    depends_on:
+      preparar: {condition: service_completed_successfully}
+
+volumes:
+  pgdemo:

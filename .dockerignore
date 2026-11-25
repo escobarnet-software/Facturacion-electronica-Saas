@@ -14,6 +14,7 @@ storage/framework/sessions/*
 storage/framework/views/*
 storage/framework/testing
 tests
-docs/oficial
+docs/oficial/*
+!docs/oficial/Catalogos.xlsx
 escobarnet-dte-paso1
 respaldos

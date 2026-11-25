@@ -5,9 +5,11 @@ use App\Livewire\Admin\Empresas;
 use App\Mail\AlertaPlataforma;
 use App\Mail\InvitacionDueno;
 use App\Models\Contingencia;
+use App\Models\Empresa;
 use App\Models\EmpresaCredencial;
 use App\Models\HaciendaMetrica;
 use App\Models\Plan;
+use App\Models\Producto;
 use App\Models\Usuario;
 use App\Models\Webhook;
 use App\Plataforma\Salud\Vigilante;
@@ -156,4 +158,17 @@ it('Horizon solo lo ve el superadmin con doble factor', function () {
     expect(Gate::forUser($d['usuario'])->allows('viewHorizon'))->toBeFalse()
         ->and(Gate::forUser(Usuario::factory()->create(['es_superadmin' => true]))->allows('viewHorizon'))->toBeFalse()
         ->and(Gate::forUser(Usuario::factory()->create(['es_superadmin' => true, 'two_factor_confirmed_at' => now()]))->allows('viewHorizon'))->toBeTrue();
+});
+
+it('dte:demo crea la empresa demo de forma idempotente y no corre en producción', function () {
+    $this->artisan('dte:demo --clave=corta')->assertFailed();
+    $this->artisan('dte:demo --clave=ClaveDemo2026')->expectsOutputToContain('Demo lista')->assertSuccessful();
+    $this->artisan('dte:demo --clave=ClaveDemo2026')->assertSuccessful();
+
+    $empresa = tenancy()->sinAislamiento(fn () => Empresa::query()->where('nit', '06141507261015')->sole());
+    expect(tenancy()->ejecutarComo($empresa->id, fn () => Producto::query()->count()))->toBe(4)
+        ->and(auth()->attempt(['email' => 'contador@demo.test', 'password' => 'ClaveDemo2026']))->toBeTrue();
+
+    app()->detectEnvironment(fn () => 'production');
+    $this->artisan('dte:demo --clave=ClaveDemo2026')->assertFailed();
 });

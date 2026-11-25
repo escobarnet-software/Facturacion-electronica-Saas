@@ -36,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
         // Modo demo: Hacienda (pruebas) y firmador simulados en local. Nunca en producción.
         $simulador = config('dte.simulador_url');
         if (is_string($simulador) && $simulador !== '' && ! $this->app->environment('production')
-            && preg_match('#^http://(127\.0\.0\.1|localhost)(:\d+)?$#', $simulador)) {
+            && preg_match('#^http://(127\.0\.0\.1|localhost|simulador)(:\d+)?$#', $simulador)) {
             config(['dte.api.base_url.00' => $simulador, 'dte.firmador.url' => $simulador.'/firmardocumento/']);
         }
 

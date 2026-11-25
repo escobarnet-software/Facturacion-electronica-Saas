@@ -55,6 +55,8 @@ return [
     // SOLO desarrollo/demo: URL del simulador local de Hacienda y del firmador (tests/Carga/simulador.php).
     // Si está definido (y APP_ENV no es production), reemplaza la URL del ambiente 00 y del firmador.
     'simulador_url' => env('DTE_SIMULADOR_URL'),
+    // SOLO demo: contraseña del usuario contador@demo.test que crea `dte:demo`.
+    'demo_clave' => env('DEMO_CLAVE'),
 
     'lote' => [
         // Hasta 100 DTE por lote (MTIST).

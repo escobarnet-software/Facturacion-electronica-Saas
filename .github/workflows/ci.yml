@@ -111,6 +111,28 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/up && exit 0; sleep 2; done
           docker logs app; exit 1
 
+  demo:
+    name: Demo con Docker (docker-compose.demo.yml)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Levantar la demo
+        run: docker compose -f docker-compose.demo.yml up -d --build
+      - name: El panel responde y la demo permite iniciar sesión
+        run: |
+          for i in $(seq 1 60); do curl -fsS -o /dev/null http://127.0.0.1:8000/login && break; sleep 3; done
+          docker compose -f docker-compose.demo.yml logs preparar | grep -q "Demo lista"
+          token=$(curl -fsS -c c.txt http://127.0.0.1:8000/login | grep -o 'name="_token" value="[^"]*"' | cut -d'"' -f4)
+          destino=$(curl -sS -b c.txt -c c.txt -o /dev/null -w '%{redirect_url}' \
+            --data-urlencode "_token=$token" --data-urlencode "email=contador@demo.test" --data-urlencode 'password=Demo2026!' \
+            http://127.0.0.1:8000/login)
+          echo "Después del login: $destino"
+          [[ "$destino" == */panel ]]
+          curl -fsS -b c.txt http://127.0.0.1:8000/panel/emitir | grep -q "Pupusa revuelta"
+      - name: Registros si falla
+        if: failure()
+        run: docker compose -f docker-compose.demo.yml logs --tail=80
+
   assets:
     name: Assets (Vite + Tailwind)
     runs-on: ubuntu-latest
