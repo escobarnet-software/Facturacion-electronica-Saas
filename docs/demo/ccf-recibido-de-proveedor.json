@@ -1,0 +1,116 @@
+{
+    "identificacion": {
+        "version": 4,
+        "ambiente": "00",
+        "tipoDte": "03",
+        "numeroControl": "DTE-03-M001P001-000000000000001",
+        "codigoGeneracion": "61076693-E8F5-4786-9DCC-2A82C2B5E085",
+        "tipoModelo": 1,
+        "tipoOperacion": 1,
+        "tipoContingencia": null,
+        "motivoContin": null,
+        "fecEmi": "2026-11-25",
+        "horEmi": "14:45:16",
+        "tipoMoneda": "USD"
+    },
+    "documentoRelacionado": null,
+    "emisor": {
+        "nit": "06142803901121",
+        "nrc": "2345678",
+        "nombre": "DISTRIBUIDORA DE MAÍZ DEMO, S.A. DE C.V.",
+        "codActividad": "46900",
+        "descActividad": "Venta al por mayor",
+        "nombreComercial": "Maíz Demo",
+        "direccion": {
+            "departamento": "06",
+            "municipio": "23",
+            "distrito": "14",
+            "complemento": "San Salvador"
+        },
+        "telefono": "22224444",
+        "correo": "dte@maiz-demo.test",
+        "codEstable": "M001",
+        "codPuntoVenta": "P001"
+    },
+    "receptor": {
+        "nit": "06141507261015",
+        "nrc": "3216549",
+        "nombre": "PUPUSERÍA DEMO, S.A. DE C.V.",
+        "codActividad": "56101",
+        "descActividad": "Restaurantes",
+        "nombreComercial": null,
+        "direccion": {
+            "departamento": "06",
+            "municipio": "23",
+            "distrito": "14",
+            "complemento": "Colonia Escalón, San Salvador"
+        },
+        "telefono": null,
+        "correo": "ventas@pupuseria-demo.test"
+    },
+    "otrosDocumentos": null,
+    "ventaTercero": null,
+    "cuerpoDocumento": [
+        {
+            "numItem": 1,
+            "tipoItem": 1,
+            "numeroDocumento": null,
+            "codigo": null,
+            "codTributo": null,
+            "descripcion": "Harina de maíz (quintal)",
+            "cantidad": 4,
+            "uniMedida": 59,
+            "precioUni": 25,
+            "montoDescu": 0,
+            "ventaNoSuj": 0,
+            "ventaExenta": 0,
+            "ventaGravada": 100,
+            "tributos": [
+                "20"
+            ],
+            "psv": 0,
+            "noGravado": 0
+        }
+    ],
+    "resumen": {
+        "totalNoSuj": 0,
+        "totalExenta": 0,
+        "totalGravada": 100,
+        "subTotalVentas": 100,
+        "descuNoSuj": 0,
+        "descuExenta": 0,
+        "descuGravada": 0,
+        "porcentajeDescuento": 0,
+        "totalDescu": 0,
+        "tributos": [
+            {
+                "codigo": "20",
+                "descripcion": "Impuesto al Valor Agregado 13%",
+                "valor": 13
+            }
+        ],
+        "subTotal": 100,
+        "ivaPerci": 0,
+        "ivaRete": 0,
+        "montoTotalOperacion": 113,
+        "totalNoGravado": 0,
+        "totalPagar": 113,
+        "totalLetras": "CIENTO TRECE CON 00/100 DÓLARES",
+        "saldoFavor": 0,
+        "condicionOperacion": 1,
+        "pagos": [
+            {
+                "codigo": "01",
+                "montoPago": 113,
+                "referencia": null,
+                "plazo": null,
+                "periodo": null
+            }
+        ],
+        "numPagoElectronico": null,
+        "observaciones": null
+    },
+    "apendice": null,
+    "firmaElectronica": "eyJhbGciOiJSUzUxMiJ9.eyJpZGVudGlmaWNhY2lvbiI6eyJ2ZXJzaW9uIjo0LCJhbWJpZW50ZSI6IjAwIiwidGlwb0R0ZSI6IjAzIiwibnVtZXJvQ29udHJvbCI6IkRURS0wMy1NMDAxUDAwMS0wMDAwMDAwMDAwMDAwMDEiLCJjb2RpZ29HZW5lcmFjaW9uIjoiNjEwNzY2OTMtRThGNS00Nzg2LTlEQ0MtMkE4MkMyQjVFMDg1IiwidGlwb01vZGVsbyI6MSwidGlwb09wZXJhY2lvbiI6MSwidGlwb0NvbnRpbmdlbmNpYSI6bnVsbCwibW90aXZvQ29udGluIjpudWxsLCJmZWNFbWkiOiIyMDI2LTExLTI1IiwiaG9yRW1pIjoiMTQ6NDU6MTYiLCJ0aXBvTW9uZWRhIjoiVVNEIn0sImRvY3VtZW50b1JlbGFjaW9uYWRvIjpudWxsLCJlbWlzb3IiOnsibml0IjoiMDYxNDI4MDM5MDExMjEiLCJucmMiOiIyMzQ1Njc4Iiwibm9tYnJlIjoiRElTVFJJQlVJRE9SQSBERSBNQcONWiBERU1PLCBTLkEuIERFIEMuVi4iLCJjb2RBY3RpdmlkYWQiOiI0NjkwMCIsImRlc2NBY3RpdmlkYWQiOiJWZW50YSBhbCBwb3IgbWF5b3IiLCJub21icmVDb21lcmNpYWwiOiJNYcOteiBEZW1vIiwiZGlyZWNjaW9uIjp7ImRlcGFydGFtZW50byI6IjA2IiwibXVuaWNpcGlvIjoiMjMiLCJkaXN0cml0byI6IjE0IiwiY29tcGxlbWVudG8iOiJTYW4gU2FsdmFkb3IifSwidGVsZWZvbm8iOiIyMjIyNDQ0NCIsImNvcnJlbyI6ImR0ZUBtYWl6LWRlbW8udGVzdCIsImNvZEVzdGFibGUiOiJNMDAxIiwiY29kUHVudG9WZW50YSI6IlAwMDEifSwicmVjZXB0b3IiOnsibml0IjoiMDYxNDE1MDcyNjEwMTUiLCJucmMiOiIzMjE2NTQ5Iiwibm9tYnJlIjoiUFVQVVNFUsONQSBERU1PLCBTLkEuIERFIEMuVi4iLCJjb2RBY3RpdmlkYWQiOiI1NjEwMSIsImRlc2NBY3RpdmlkYWQiOiJSZXN0YXVyYW50ZXMiLCJub21icmVDb21lcmNpYWwiOm51bGwsImRpcmVjY2lvbiI6eyJkZXBhcnRhbWVudG8iOiIwNiIsIm11bmljaXBpbyI6IjIzIiwiZGlzdHJpdG8iOiIxNCIsImNvbXBsZW1lbnRvIjoiQ29sb25pYSBFc2NhbMOzbiwgU2FuIFNhbHZhZG9yIn0sInRlbGVmb25vIjpudWxsLCJjb3JyZW8iOiJ2ZW50YXNAcHVwdXNlcmlhLWRlbW8udGVzdCJ9LCJvdHJvc0RvY3VtZW50b3MiOm51bGwsInZlbnRhVGVyY2VybyI6bnVsbCwiY3VlcnBvRG9jdW1lbnRvIjpbeyJudW1JdGVtIjoxLCJ0aXBvSXRlbSI6MSwibnVtZXJvRG9jdW1lbnRvIjpudWxsLCJjb2RpZ28iOm51bGwsImNvZFRyaWJ1dG8iOm51bGwsImRlc2NyaXBjaW9uIjoiSGFyaW5hIGRlIG1hw616IChxdWludGFsKSIsImNhbnRpZGFkIjo0LCJ1bmlNZWRpZGEiOjU5LCJwcmVjaW9VbmkiOjI1LCJtb250b0Rlc2N1IjowLCJ2ZW50YU5vU3VqIjowLCJ2ZW50YUV4ZW50YSI6MCwidmVudGFHcmF2YWRhIjoxMDAsInRyaWJ1dG9zIjpbIjIwIl0sInBzdiI6MCwibm9HcmF2YWRvIjowfV0sInJlc3VtZW4iOnsidG90YWxOb1N1aiI6MCwidG90YWxFeGVudGEiOjAsInRvdGFsR3JhdmFkYSI6MTAwLCJzdWJUb3RhbFZlbnRhcyI6MTAwLCJkZXNjdU5vU3VqIjowLCJkZXNjdUV4ZW50YSI6MCwiZGVzY3VHcmF2YWRhIjowLCJwb3JjZW50YWplRGVzY3VlbnRvIjowLCJ0b3RhbERlc2N1IjowLCJ0cmlidXRvcyI6W3siY29kaWdvIjoiMjAiLCJkZXNjcmlwY2lvbiI6IkltcHVlc3RvIGFsIFZhbG9yIEFncmVnYWRvIDEzJSIsInZhbG9yIjoxM31dLCJzdWJUb3RhbCI6MTAwLCJpdmFQZXJjaSI6MCwiaXZhUmV0ZSI6MCwibW9udG9Ub3RhbE9wZXJhY2lvbiI6MTEzLCJ0b3RhbE5vR3JhdmFkbyI6MCwidG90YWxQYWdhciI6MTEzLCJ0b3RhbExldHJhcyI6IkNJRU5UTyBUUkVDRSBDT04gMDAvMTAwIETDk0xBUkVTIiwic2FsZG9GYXZvciI6MCwiY29uZGljaW9uT3BlcmFjaW9uIjoxLCJwYWdvcyI6W3siY29kaWdvIjoiMDEiLCJtb250b1BhZ28iOjExMywicmVmZXJlbmNpYSI6bnVsbCwicGxhem8iOm51bGwsInBlcmlvZG8iOm51bGx9XSwibnVtUGFnb0VsZWN0cm9uaWNvIjpudWxsLCJvYnNlcnZhY2lvbmVzIjpudWxsfSwiYXBlbmRpY2UiOm51bGx9.ZmlybWEtZGUtZWplbXBsbw",
+    "selloRecibido": "59B535D213C14A88536152A9DC83F6227506B298"
+}
