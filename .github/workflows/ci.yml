@@ -129,6 +129,10 @@ jobs:
           echo "Después del login: $destino"
           [[ "$destino" == */panel ]]
           curl -fsS -b c.txt http://127.0.0.1:8000/panel/emitir | grep -q "Pupusa revuelta"
+      - name: Pruebas mínimas de Hacienda contra el simulador (como en la guía)
+        run: |
+          docker compose -f docker-compose.demo.yml exec -T web php artisan dte:pruebas-minimas 06141507261015 --tipos=01,03,05,invalidacion,contingencia
+          curl -fsS http://127.0.0.1:8899/simulador/estado | grep -q "en línea"
       - name: Registros si falla
         if: failure()
         run: docker compose -f docker-compose.demo.yml logs --tail=80

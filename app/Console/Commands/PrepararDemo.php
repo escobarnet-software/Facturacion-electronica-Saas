@@ -57,8 +57,9 @@ class PrepararDemo extends Command
                 (new EmpresaCredencial(['ambiente' => '00', 'usuario_api' => $empresa->nit]))->establecerSecretos('ClaveDemoFalsa#1', 'LlaveDemoFalsa#1')->save();
             }
             Suscripcion::query()->firstOrCreate(['plan_id' => $plan->id], ['estado' => 'activa', 'inicio' => now()->toDateString()]);
-            foreach ([['Pupusa revuelta', '0.66371681'], ['Pupusa de queso', '0.61946903'], ['Horchata', '0.88495575'], ['Café', '0.70796460']] as [$descripcion, $precio]) {
-                Producto::query()->firstOrCreate(['descripcion' => $descripcion], ['precio' => $precio]);
+            // Precios sin IVA; con IVA quedan en $0.75, $0.70, $1.00 y $0.80. El código sirve para la Caja rápida.
+            foreach ([['1001', 'Pupusa revuelta', '0.66371681'], ['1002', 'Pupusa de queso', '0.61946903'], ['1003', 'Horchata', '0.88495575'], ['1004', 'Café', '0.70796460']] as [$codigo, $descripcion, $precio]) {
+                Producto::query()->updateOrCreate(['descripcion' => $descripcion], ['codigo' => $codigo, 'codigo_barras' => '74100000'.$codigo, 'precio' => $precio]);
             }
             Cliente::query()->firstOrCreate(['tipo_documento' => '36', 'num_documento' => '06140101851014'], [
                 'nrc' => '765432', 'nombre' => 'CLIENTE CONTRIBUYENTE DEMO, S.A. DE C.V.', 'cod_actividad' => '46900',

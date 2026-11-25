@@ -73,6 +73,8 @@ services:
     command: ["php", "-S", "0.0.0.0:8899", "/sim/simulador.php"]
     environment: {PHP_CLI_SERVER_WORKERS: "8", SIMULADOR_LATENCIA_MS: "50"}
     volumes: ["./tests/Carga:/sim:ro"]
+    # http://localhost:8899/simulador/estado → simular caída de Hacienda (pruebas de contingencia).
+    ports: ["127.0.0.1:8899:8899"]
 
   # Migra, carga los catálogos oficiales y crea la empresa demo; luego termina.
   preparar:
@@ -93,6 +95,13 @@ services:
   horizon:
     <<: *app
     environment: {<<: *env, ROL: horizon}
+    depends_on:
+      preparar: {condition: service_completed_successfully}
+
+  # Tareas programadas (contingencia cada 15 min, vigilancia). Para no esperar, ver la guía de pruebas.
+  scheduler:
+    <<: *app
+    environment: {<<: *env, ROL: scheduler}
     depends_on:
       preparar: {condition: service_completed_successfully}
 
