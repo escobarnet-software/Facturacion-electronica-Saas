@@ -3,14 +3,19 @@
 namespace App\Providers;
 
 use App\Enums\Rol;
+use App\Models\TokenApi;
 use App\Models\Usuario;
 use App\Support\Seguridad\Secretos;
 use App\Tenancy\Tenancy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // API: tokens de empresa con permisos; límite de peticiones por token.
+        Sanctum::usePersonalAccessTokenModel(TokenApi::class);
+        RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by('token:'.($r->bearerToken() !== null ? hash('sha256', $r->bearerToken()) : $r->ip()))
+            ->response(fn () => response()->json(['message' => 'Demasiadas solicitudes: espere un momento e intente de nuevo.'], 429)));
+
         // Red de seguridad: en un worker, ningún job deja su empresa fijada al siguiente.
         // (En la cola síncrona el job corre dentro de la petición: ConEmpresa restaura la empresa.)
         $limpiar = function (JobProcessed|JobFailed $evento): void {

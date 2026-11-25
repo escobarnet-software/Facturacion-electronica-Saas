@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12 · [ ] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -294,3 +294,17 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - TODO(normativa): columnas exactas de los anexos del F-07 según el instructivo vigente; verificar la firma RSA del
     JWS recibido requiere el certificado público del emisor (Hacienda no lo publica).
   - Pendiente de hosting: elegir el proveedor de correo entrante que reenvía al buzón.
+- **Paso 12 (2026-11-25):** API pública v1 (`routes/api.php`) con Sanctum: el token pertenece a la **empresa**
+  (`TokenApi::findToken` fija la empresa antes de cargarla; `api.empresa` la limpia al terminar) y lleva permisos
+  (`dte:emitir`, `dte:leer`, `dte:invalidar`, `catalogos:leer`). La sesión del panel no sirve para la API.
+  Endpoints: emitir (FE y CCF; la plataforma calcula, `calcular=false` valida con ±0.01), consultar, PDF, JSON,
+  invalidar y catálogos. Montos como texto (o número JSON solo si es exacto). `Idempotency-Key`: tabla
+  `api_idempotencia` (RLS, única por empresa): misma clave y cuerpo → la misma respuesta; otro cuerpo → 422; en curso → 409.
+  Webhooks (`webhooks`, `webhook_entregas`, RLS): `dte.transmitido`, `dte.rechazado`, `dte.invalidado`,
+  `contingencia.iniciada` y `.finalizada`; firma `X-DTE-Firma: t=…,v1=HMAC-SHA256`, secreto cifrado con
+  `DTE_SECRETS_KEY`, cola `webhooks` con 6 reintentos y backoff creciente (30 s → 4 h), bloqueo de destinos internos (SSRF).
+  OpenAPI en `docs/api/openapi.json` (servido en `/api/v1/openapi.json`, una prueba exige que documente todas las
+  rutas) y ejemplos en PHP y JavaScript (`docs/api/ejemplos/`). Pantalla «API» (solo el dueño): tokens y webhooks, el
+  secreto se muestra una sola vez. Mensajes de validación en español (`lang/es`).
+  - Pendiente: emisión por API de los tipos 04–15 (hoy, igual que el panel, solo 01 y 03).
+  - Paso 14: proxy de salida para los webhooks (además de la validación de la URL).

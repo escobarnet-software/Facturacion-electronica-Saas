@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Database\Factories\EmpresaFactory;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AutenticableContrato;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Empresa cliente (tenant). Ante Hacienda, es la emisora.
@@ -23,8 +26,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $modo_correlativo
  * @property string $estado
  */
-class Empresa extends Model
+class Empresa extends Model implements AutenticableContrato
 {
+    // Autenticable SOLO como dueña de tokens de la API (no tiene contraseña ni inicia sesión).
+    use Authenticatable;
+    use HasApiTokens;
+
     /** @use HasFactory<EmpresaFactory> */
     use HasFactory;
 

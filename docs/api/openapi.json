@@ -1,0 +1,870 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Escobar Net DTE — API pública",
+    "version": "1.0.0",
+    "description": "API para POS y ERP. Autenticación con token de empresa (Bearer) y permisos por token: dte:emitir, dte:leer, dte:invalidar, catalogos:leer. La plataforma calcula los totales con aritmética decimal exacta. Límite: 120 solicitudes por minuto por token. Los mensajes de error van en español."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "token": []
+    }
+  ],
+  "paths": {
+    "/dte/{tipo}": {
+      "post": {
+        "summary": "Emitir un documento",
+        "operationId": "emitirDte",
+        "description": "Tipos disponibles: 01 (Factura) y 03 (Crédito Fiscal). Permiso: dte:emitir.",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "01",
+                "03"
+              ]
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "description": "La misma clave nunca genera dos documentos. Una repetición con el mismo cuerpo devuelve la respuesta original (cabecera Idempotent-Replayed: true); con otro cuerpo, 422; mientras la primera sigue en curso, 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudEmision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Documento creado (se firma y transmite en la cola; consulte el estado o use webhooks)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Documento"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dte/{codigo}": {
+      "get": {
+        "summary": "Consultar un documento",
+        "operationId": "consultarDte",
+        "description": "Permiso: dte:leer.",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "codigoGeneracion del documento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Documento"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/pdf": {
+      "get": {
+        "summary": "Representación gráfica (PDF)",
+        "operationId": "pdfDte",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "codigoGeneracion del documento"
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "carta",
+                "ticket"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/json": {
+      "get": {
+        "summary": "Archivo DTE (JSON firmado con sello)",
+        "operationId": "jsonDte",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "codigoGeneracion del documento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON exactamente como se transmitió, con firmaElectronica y selloRecibido",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dte/{codigo}/invalidar": {
+      "post": {
+        "summary": "Invalidar un documento",
+        "operationId": "invalidarDte",
+        "description": "Permiso: dte:invalidar. Solo documentos con sello y dentro del plazo.",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "codigoGeneracion del documento"
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "description": "La misma clave nunca genera dos documentos. Una repetición con el mismo cuerpo devuelve la respuesta original (cabecera Idempotent-Replayed: true); con otro cuerpo, 422; mientras la primera sigue en curso, 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudInvalidacion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Documento invalidado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Documento"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogos/{catalogo}": {
+      "get": {
+        "summary": "Valores vigentes de un catálogo oficial",
+        "operationId": "catalogo",
+        "description": "Permiso: catalogos:leer.",
+        "parameters": [
+          {
+            "name": "catalogo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "CAT-012"
+          },
+          {
+            "name": "padre",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "catalogo": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "valor": {
+                            "type": "string"
+                          },
+                          "padre": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "Este documento",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OpenAPI"
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "dte.transmitido": {
+      "post": {
+        "summary": "Documento con sello de Hacienda",
+        "description": "Cuerpo firmado con HMAC-SHA256. Cabecera X-DTE-Firma: t=<unix>,v1=<hex de HMAC(secreto, \"t.cuerpo\")>. También X-DTE-Evento y X-DTE-Entrega (id único, para descartar duplicados). Responda 2xx; si no, se reintenta con espera creciente (30 s, 2 min, 10 min, 30 min, 1 h, 4 h).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido"
+          }
+        }
+      }
+    },
+    "dte.rechazado": {
+      "post": {
+        "summary": "Documento rechazado por Hacienda",
+        "description": "Cuerpo firmado con HMAC-SHA256. Cabecera X-DTE-Firma: t=<unix>,v1=<hex de HMAC(secreto, \"t.cuerpo\")>. También X-DTE-Evento y X-DTE-Entrega (id único, para descartar duplicados). Responda 2xx; si no, se reintenta con espera creciente (30 s, 2 min, 10 min, 30 min, 1 h, 4 h).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido"
+          }
+        }
+      }
+    },
+    "dte.invalidado": {
+      "post": {
+        "summary": "Documento invalidado",
+        "description": "Cuerpo firmado con HMAC-SHA256. Cabecera X-DTE-Firma: t=<unix>,v1=<hex de HMAC(secreto, \"t.cuerpo\")>. También X-DTE-Evento y X-DTE-Entrega (id único, para descartar duplicados). Responda 2xx; si no, se reintenta con espera creciente (30 s, 2 min, 10 min, 30 min, 1 h, 4 h).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido"
+          }
+        }
+      }
+    },
+    "contingencia.iniciada": {
+      "post": {
+        "summary": "Inicio de contingencia",
+        "description": "Cuerpo firmado con HMAC-SHA256. Cabecera X-DTE-Firma: t=<unix>,v1=<hex de HMAC(secreto, \"t.cuerpo\")>. También X-DTE-Evento y X-DTE-Entrega (id único, para descartar duplicados). Responda 2xx; si no, se reintenta con espera creciente (30 s, 2 min, 10 min, 30 min, 1 h, 4 h).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido"
+          }
+        }
+      }
+    },
+    "contingencia.finalizada": {
+      "post": {
+        "summary": "Fin de contingencia",
+        "description": "Cuerpo firmado con HMAC-SHA256. Cabecera X-DTE-Firma: t=<unix>,v1=<hex de HMAC(secreto, \"t.cuerpo\")>. También X-DTE-Evento y X-DTE-Entrega (id único, para descartar duplicados). Responda 2xx; si no, se reintenta con espera creciente (30 s, 2 min, 10 min, 30 min, 1 h, 4 h).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventoWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "token": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token de empresa creado en el panel (API y webhooks)."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object"
+          }
+        }
+      },
+      "Monto": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^\\d{1,11}(\\.\\d{1,8})?$"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "description": "Monto exacto. Se recomienda enviarlo como texto (\"0.75\"): un número JSON con más de 15 cifras significativas se rechaza."
+      },
+      "Linea": {
+        "type": "object",
+        "required": [
+          "descripcion",
+          "cantidad",
+          "precio"
+        ],
+        "properties": {
+          "descripcion": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "cantidad": {
+            "$ref": "#/components/schemas/Monto"
+          },
+          "precio": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Monto"
+              }
+            ],
+            "description": "Precio unitario SIN IVA"
+          },
+          "descuento": {
+            "$ref": "#/components/schemas/Monto"
+          },
+          "tipo_venta": {
+            "type": "string",
+            "enum": [
+              "gravada",
+              "exenta",
+              "no_sujeta"
+            ]
+          },
+          "tipo_item": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "uni_medida": {
+            "type": "integer",
+            "description": "CAT-014"
+          },
+          "codigo": {
+            "type": "string",
+            "maxLength": 25
+          }
+        }
+      },
+      "Cliente": {
+        "type": "object",
+        "required": [
+          "tipo_documento",
+          "num_documento",
+          "nombre"
+        ],
+        "properties": {
+          "tipo_documento": {
+            "type": "string",
+            "description": "CAT-022 (36 = NIT)"
+          },
+          "num_documento": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "nrc": {
+            "type": "string"
+          },
+          "cod_actividad": {
+            "type": "string"
+          },
+          "desc_actividad": {
+            "type": "string"
+          },
+          "direccion": {
+            "type": "object",
+            "properties": {
+              "departamento": {
+                "type": "string"
+              },
+              "municipio": {
+                "type": "string"
+              },
+              "distrito": {
+                "type": "string"
+              },
+              "complemento": {
+                "type": "string"
+              }
+            }
+          },
+          "telefono": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "SolicitudEmision": {
+        "type": "object",
+        "required": [
+          "lineas"
+        ],
+        "properties": {
+          "establecimiento": {
+            "type": "string",
+            "description": "Código MH de 4 caracteres (por defecto, el primero)"
+          },
+          "punto_venta": {
+            "type": "string"
+          },
+          "lineas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Linea"
+            }
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/Cliente"
+          },
+          "pagos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "codigo"
+              ],
+              "properties": {
+                "codigo": {
+                  "type": "string",
+                  "description": "CAT-017"
+                },
+                "monto": {
+                  "$ref": "#/components/schemas/Monto"
+                },
+                "referencia": {
+                  "type": "string"
+                },
+                "plazo": {
+                  "type": "string"
+                },
+                "periodo": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "condicion_operacion": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observaciones": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string",
+            "format": "email"
+          },
+          "calcular": {
+            "type": "boolean",
+            "default": true,
+            "description": "false: usted envía sus totales y se validan contra el cálculo (holgura ±0.01)"
+          },
+          "totales": {
+            "type": "object",
+            "properties": {
+              "total_pagar": {
+                "$ref": "#/components/schemas/Monto"
+              },
+              "total_gravada": {
+                "$ref": "#/components/schemas/Monto"
+              },
+              "total_iva": {
+                "$ref": "#/components/schemas/Monto"
+              }
+            }
+          }
+        }
+      },
+      "SolicitudInvalidacion": {
+        "type": "object",
+        "required": [
+          "tipo_anulacion",
+          "solicita"
+        ],
+        "properties": {
+          "tipo_anulacion": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ],
+            "description": "CAT-024"
+          },
+          "motivo": {
+            "type": "string"
+          },
+          "codigo_generacion_reemplazo": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "solicita": {
+            "type": "object",
+            "required": [
+              "nombre",
+              "tipo_documento",
+              "num_documento"
+            ],
+            "properties": {
+              "nombre": {
+                "type": "string"
+              },
+              "tipo_documento": {
+                "type": "string"
+              },
+              "num_documento": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Documento": {
+        "type": "object",
+        "properties": {
+          "codigo_generacion": {
+            "type": "string"
+          },
+          "numero_control": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "ambiente": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "borrador",
+              "validado",
+              "firmado",
+              "transmitido",
+              "observado",
+              "rechazado",
+              "transitorio",
+              "ajustado",
+              "invalidado"
+            ]
+          },
+          "estado_descripcion": {
+            "type": "string"
+          },
+          "fecha_emision": {
+            "type": "string",
+            "format": "date"
+          },
+          "sello_recibido": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_gravada": {
+            "type": "string"
+          },
+          "total_iva": {
+            "type": "string"
+          },
+          "total_pagar": {
+            "type": "string"
+          },
+          "enlaces": {
+            "type": "object",
+            "properties": {
+              "pdf": {
+                "type": "string"
+              },
+              "json": {
+                "type": "string"
+              },
+              "portal": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "EventoWebhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "evento": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "datos": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

@@ -21,6 +21,8 @@ use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\PruebaMinima;
 use App\Models\PuntoVenta;
+use App\Models\Webhook;
+use App\Models\WebhookEntrega;
 use Illuminate\Support\Facades\DB;
 
 /*
@@ -28,7 +30,7 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas', 'dte_recibidos'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas', 'dte_recibidos', 'api_idempotencia', 'webhooks', 'webhook_entregas'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
@@ -46,6 +48,9 @@ beforeEach(function () {
             Cliente::query()->create(['tipo_documento' => '13', 'num_documento' => '012345678', 'nombre' => 'Cliente']);
             PruebaMinima::query()->create(['tipo' => '01', 'requeridas' => 90]);
             DteRecibido::query()->create(['tipo' => '03', 'codigo_generacion' => CodigoGeneracion::nuevo(), 'numero_control' => 'DTE-03-M001P001-000000000000001', 'fecha_emision' => now()->toDateString(), 'emisor_nit' => '06140101851014', 'emisor_nombre' => 'Proveedor', 'sello_recibido' => str_repeat('A', 40), 'json_texto' => '{}', 'json_original' => [], 'firma_coincide' => true, 'origen' => 'subida']);
+            DB::table('api_idempotencia')->insert(['empresa_id' => $datos['empresa']->id, 'clave' => 'clave-1', 'huella' => str_repeat('0', 64), 'estado' => 'completado', 'created_at' => now(), 'updated_at' => now()]);
+            $w = Webhook::query()->create(['url' => 'https://hooks.cliente.test/dte', 'secreto' => 'whsec_prueba', 'eventos' => ['dte.transmitido']]);
+            WebhookEntrega::query()->create(['webhook_id' => $w->id, 'uuid' => CodigoGeneracion::nuevo(), 'evento' => 'dte.transmitido', 'cuerpo' => '{}']);
         });
     }
 });

@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/reportes', Panel\Reportes::class)->name('panel.reportes');
         Route::get('/panel/reportes/{libro}.{formato}', LibroDescargaController::class)
             ->whereIn('libro', ['consumidor', 'contribuyentes', 'compras'])->whereIn('formato', ['csv', 'xlsx'])->name('panel.reportes.descargar');
+        Route::get('/panel/api', Panel\ApiWebhooks::class)->name('panel.api');
         Route::get('/panel/configuracion', Panel\Onboarding::class)->name('panel.onboarding');
 
         Route::post('/empresa-activa', EmpresaActivaController::class)->name('empresa-activa');

@@ -21,6 +21,7 @@ use App\Models\Evento;
 use App\Models\Lote;
 use App\Models\PuntoVenta;
 use App\Support\DteJson;
+use App\Webhooks\Webhooks;
 use Carbon\CarbonImmutable;
 use LogicException;
 
@@ -120,6 +121,7 @@ final class GestorContingencia
             $hacienda->token(); // si no responde lanza SinRespuestaException
             $c->forceFill(['fin' => $ahora, 'estado' => Contingencia::CERRADA])->save();
             Bitacora::registrar('contingencia.finalizada', $c, ['inicio' => $c->inicio->toIso8601String(), 'fin' => $ahora->toIso8601String()]);
+            Webhooks::contingencia('contingencia.finalizada', $c);
         }
 
         if ($c->estado === Contingencia::CERRADA) {
@@ -301,6 +303,7 @@ final class GestorContingencia
             'ambiente' => $ambiente, 'inicio' => now(), 'tipo' => $tipo, 'motivo' => $motivo, 'estado' => Contingencia::ACTIVA,
         ]);
         Bitacora::registrar('contingencia.iniciada', $c, ['tipo' => $tipo]);
+        Webhooks::contingencia('contingencia.iniciada', $c);
 
         return $c;
     }

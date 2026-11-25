@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EstadoDte;
 use App\Tenancy\PerteneceAEmpresa;
+use App\Webhooks\Webhooks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -101,5 +102,17 @@ class Dte extends Model
             'payload' => $payload,
             'respuesta' => $respuesta,
         ]);
+
+        if ($de !== $a) {
+            $evento = match ($a) {
+                EstadoDte::Transmitido, EstadoDte::Observado => 'dte.transmitido',
+                EstadoDte::Rechazado => 'dte.rechazado',
+                EstadoDte::Invalidado => 'dte.invalidado',
+                default => null,
+            };
+            if ($evento !== null) {
+                Webhooks::dte($evento, $this);
+            }
+        }
     }
 }

@@ -39,7 +39,8 @@
                 <a href="{{ route('panel.clientes') }}" class="hover:underline">Clientes</a>
                 <a href="{{ route('panel.establecimientos') }}" class="hover:underline">Establecimientos</a>
             @endcan
-            @can('administrar-empresa')<a href="{{ route('panel.onboarding') }}" class="hover:underline">Configuración</a>@endcan
+            @can('administrar-empresa')<a href="{{ route('panel.api') }}" class="hover:underline">API</a>
+            <a href="{{ route('panel.onboarding') }}" class="hover:underline">Configuración</a>@endcan
         </nav>
         <form method="POST" action="{{ route('logout') }}" class="ml-auto">@csrf<button class="text-sm text-slate-500 hover:underline">Salir</button></form>
     </div>
