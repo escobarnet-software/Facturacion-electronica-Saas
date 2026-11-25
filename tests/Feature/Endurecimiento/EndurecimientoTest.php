@@ -172,3 +172,8 @@ it('dte:demo crea la empresa demo de forma idempotente y no corre en producción
     app()->detectEnvironment(fn () => 'production');
     $this->artisan('dte:demo --clave=ClaveDemo2026')->assertFailed();
 });
+
+it('el login fallido muestra el mensaje en español, no la clave de traducción', function () {
+    $this->from('/login')->post('/login', ['email' => 'nadie@prueba.test', 'password' => 'incorrecta'])
+        ->assertSessionHasErrors(['email' => 'Estas credenciales no coinciden con nuestros registros.']);
+});
