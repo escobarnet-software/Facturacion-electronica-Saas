@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12 · [x] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12 · [x] 13 · [~] 14 (parcial: falta lo del hosting) · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -321,3 +321,23 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   - **Decisión pendiente 3 (pasarela de cobro):** sin decidir. Hay una interfaz `PasarelaCobro` y solo el registro
     manual del pago (`CobroManual`).
   - Paso 14: invitar al dueño por correo con un enlace de un solo uso (hoy, contraseña temporal mostrada una vez).
+- **Paso 14 — parte independiente del hosting (2026-11-25), PARCIAL:**
+  - Cabeceras de seguridad en todas las respuestas (CSP con nonce, X-Frame-Options, nosniff, Referrer-Policy,
+    Permissions-Policy, HSTS sobre HTTPS). Límites: login 5/min, API 120/min por token, portal 60/min, buzón,
+    invitación y `/salud`. Horizon solo superadmin con 2FA.
+  - Rotación de llaves: `DTE_SECRETS_PREVIOUS_KEYS` + `dte:secretos:rotar [--verificar]`; `APP_PREVIOUS_KEYS` para APP_KEY.
+  - Monitoreo: `GET /salud` por componente; `dte:hacienda:sondear` cada minuto (**apagado** con
+    `DTE_SONDEO_HACIENDA=false` hasta que se autorice conectar con Hacienda); `plataforma:vigilar` cada minuto con
+    alertas por correo a los superadmin (Hacienda, firmador, BD, Redis, cola, jobs fallidos, contingencias).
+  - Respaldos: `scripts/respaldo-bd.sh` y `scripts/probar-restauracion.sh` (suma, tablas, RLS forzado, políticas,
+    triggers, conteos). **Restauración verificada en local** y en el CI en cada push.
+  - Prueba de carga (`dte:carga`, Hacienda y firmador simulados en `tests/Carga/simulador.php`, 30 ms por llamada):
+    **70.9 documentos por segundo sostenidos** (3000 documentos en 42.3 s, 12 procesos, 24 empresas, 4 CPU),
+    0 números de control repetidos. Cumple la meta de 50/s.
+  - Imagen de producción (`docker/app/Dockerfile`: php-fpm + nginx; `ROL=web|horizon|scheduler|migrar`), construida
+    y arrancada en el CI. `.env.production.example` y `plataforma:revisar-produccion`.
+  - Invitación del dueño por correo con enlace firmado de un solo uso (72 h), sin contraseña temporal.
+  - `docs/operacion/runbook.md` y `docs/seguridad/checklist-asvs-l2.md` (con lo pendiente marcado).
+    `composer audit` y `npm audit` bloqueantes en el CI (se actualizó `web-auth/webauthn-lib`).
+  - **Pendiente por la decisión 2 (hosting):** infraestructura como código, entornos staging y production, WAF,
+    KMS, logs centralizados, prueba de restauración en staging con el respaldo real, proxy de salida de webhooks.

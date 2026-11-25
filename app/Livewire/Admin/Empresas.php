@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Enums\Rol;
+use App\Mail\InvitacionDueno;
 use App\Models\AccesoSoporte;
 use App\Models\Bitacora;
 use App\Models\ConsumoMensual;
@@ -13,6 +14,8 @@ use App\Models\Usuario;
 use App\Tenancy\Tenancy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -33,7 +36,7 @@ class Empresas extends Component
 
     public ?string $mensaje = null;
 
-    public ?string $claveTemporal = null;
+    public ?string $invitacionEnviada = null;
 
     public function mount(): void
     {
@@ -53,7 +56,7 @@ class Empresas extends Component
             'nueva.dueno_nombre' => 'required|string|max:255',
         ], ['nueva.nit.regex' => 'El NIT debe tener 9 o 14 dígitos, sin guiones.'])['nueva'];
 
-        $this->claveTemporal = null;
+        $this->invitacionEnviada = null;
         $tenancy->sinAislamiento(function () use ($d, $tenancy) {
             if (Empresa::query()->where('nit', $d['nit'])->exists()) {
                 $this->addError('nueva.nit', 'Ya existe una empresa con ese NIT.');
@@ -67,10 +70,11 @@ class Empresas extends Component
                 Suscripcion::query()->create(['plan_id' => $plan->id, 'estado' => 'activa', 'inicio' => now()->toDateString()]);
                 $dueno = Usuario::query()->where('email', $d['dueno_email'])->first();
                 if ($dueno === null) {
-                    // Contraseña temporal mostrada UNA vez al superadmin; el dueño activa 2FA al entrar.
-                    // TODO(paso-14): reemplazar por invitación por correo con enlace de un solo uso.
-                    $this->claveTemporal = Str::password(16);
-                    $dueno = Usuario::query()->forceCreate(['nombre' => $d['dueno_nombre'], 'email' => $d['dueno_email'], 'password' => $this->claveTemporal]);
+                    // Contraseña aleatoria que nadie conoce: el dueño crea la suya con la invitación.
+                    $dueno = Usuario::query()->forceCreate(['nombre' => $d['dueno_nombre'], 'email' => $d['dueno_email'], 'password' => Str::password(40)]);
+                    $enlace = URL::temporarySignedRoute('invitacion', now()->addHours(72), ['usuario' => $dueno->id]);
+                    Mail::to($dueno->email)->queue(new InvitacionDueno($empresa->razon_social, $enlace));
+                    $this->invitacionEnviada = $dueno->email;
                 }
                 $empresa->usuarios()->attach($dueno->id, ['rol' => Rol::Dueno->value]);
                 Bitacora::registrar('empresa.alta', $empresa, ['plan' => $plan->codigo, 'por' => auth()->user()?->email]);

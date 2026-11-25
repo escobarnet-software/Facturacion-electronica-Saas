@@ -3,8 +3,10 @@
 use App\Http\Controllers\BuzonEntradaController;
 use App\Http\Controllers\DocumentoDescargaController;
 use App\Http\Controllers\EmpresaActivaController;
+use App\Http\Controllers\InvitacionController;
 use App\Http\Controllers\LibroDescargaController;
 use App\Http\Controllers\PortalDteController;
+use App\Http\Controllers\SaludController;
 use App\Http\Controllers\SoporteController;
 use App\Livewire\Admin;
 use App\Livewire\Panel;
@@ -13,8 +15,17 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/panel');
 
+// Invitación del dueño: enlace firmado de un solo uso.
+Route::middleware(['signed', 'throttle:10,1'])->controller(InvitacionController::class)->group(function () {
+    Route::get('/invitacion/{usuario}', 'mostrar')->name('invitacion');
+    Route::post('/invitacion/{usuario}', 'aceptar')->name('invitacion.aceptar');
+});
+
+// Healthcheck por componente (balanceador y monitoreo externo).
+Route::get('/salud', SaludController::class)->middleware('throttle:30,1')->name('salud');
+
 // Portal público de descarga de DTE: enlaces firmados, sin sesión ni vencimiento.
-Route::middleware('signed')->controller(PortalDteController::class)->group(function () {
+Route::middleware(['signed', 'throttle:60,1'])->controller(PortalDteController::class)->group(function () {
     Route::get('/dte/{codigo}', 'mostrar')->name('dte.portal');
     Route::get('/dte/{codigo}/json', 'json')->name('dte.portal.json');
     Route::get('/dte/{codigo}/pdf', 'pdf')->name('dte.portal.pdf');

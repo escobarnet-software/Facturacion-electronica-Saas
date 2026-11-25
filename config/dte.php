@@ -90,8 +90,13 @@ return [
 
     // Llave dedicada para cifrar los secretos de los clientes (separada de APP_KEY).
     'secrets_key' => env('DTE_SECRETS_KEY'),
+    // Llaves anteriores (rotación), separadas por comas: solo para descifrar.
+    'secrets_previous_keys' => env('DTE_SECRETS_PREVIOUS_KEYS', ''),
 
     'zona_horaria' => 'America/El_Salvador',
+
+    // Healthcheck activo de Hacienda cada minuto (sale a internet). Apagado hasta habilitar la conexión.
+    'salud' => ['sondeo_hacienda' => (bool) env('DTE_SONDEO_HACIENDA', false)],
 
     // codigoMsg de Hacienda → mensaje simple en español.
     'mensajes_mh' => require __DIR__.'/dte/mensajes_mh.php',

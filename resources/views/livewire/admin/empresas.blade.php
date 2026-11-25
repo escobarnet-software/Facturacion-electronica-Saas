@@ -1,8 +1,8 @@
 <div class="space-y-4">
     <h1 class="text-2xl font-semibold">Empresas</h1>
     @if ($mensaje)<div class="rounded border border-blue-300 bg-blue-50 p-2 text-sm" role="status">{{ $mensaje }}</div>@endif
-    @if ($claveTemporal)
-        <div class="rounded border border-amber-400 bg-amber-50 p-2 text-sm" role="alert">Contraseña temporal del dueño (no se volverá a mostrar): <code class="font-mono">{{ $claveTemporal }}</code></div>
+    @if ($invitacionEnviada)
+        <div class="rounded border border-blue-300 bg-blue-50 p-2 text-sm" role="status">Se envió la invitación a {{ $invitacionEnviada }} (vence en 72 horas).</div>
     @endif
 
     <form wire:submit="crear" class="grid gap-2 rounded border bg-white p-3 text-sm sm:grid-cols-4">

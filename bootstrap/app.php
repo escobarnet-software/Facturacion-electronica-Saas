@@ -1,6 +1,7 @@
 <?php
 
 use App\Dte\Excepciones\DteException;
+use App\Http\Middleware\CabecerasSeguridad;
 use App\Http\Middleware\EmpresaDelToken;
 use App\Http\Middleware\Exigir2FA;
 use App\Http\Middleware\FijarEmpresaActiva;
@@ -34,6 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // La empresa activa se fija ANTES de resolver los modelos de la ruta ({dte}):
         // así EmpresaScope y RLS ya filtran al buscarlos (otra empresa → 404).
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: FijarEmpresaActiva::class);
+
+        // Cabeceras de seguridad en todas las respuestas (panel, portal, API).
+        $middleware->append(CabecerasSeguridad::class);
 
         // El buzón lo llama el proveedor de correo entrante (sin sesión): se protege con su token secreto.
         $middleware->validateCsrfTokens(except: ['buzon/*']);

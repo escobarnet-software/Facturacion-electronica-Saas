@@ -186,7 +186,7 @@ it('el superadmin da de alta, cambia el plan y suspende empresas; la suspendida 
     Livewire::test(Empresas::class)
         ->set('nueva', ['nit' => '06142803901121', 'nrc' => '2345678', 'razon_social' => 'NUEVA, S.A. DE C.V.', 'correo' => 'info@nueva.test', 'plan_id' => (string) $this->plan->id, 'dueno_email' => 'duena@nueva.test', 'dueno_nombre' => 'Dueña Nueva'])
         ->call('crear')->assertHasNoErrors()
-        ->assertSet('claveTemporal', fn ($c) => is_string($c) && strlen($c) === 16)
+        ->assertSet('invitacionEnviada', 'duena@nueva.test')
         ->call('cambiarPlan', $this->d['empresa']->id, $premium->id)
         ->call('cambiarEstado', $this->d['empresa']->id, 'suspendida');
 

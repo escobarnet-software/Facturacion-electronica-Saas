@@ -57,6 +57,9 @@ jobs:
 
       - run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Vulnerabilidades conocidas (Composer)
+        run: composer audit --no-dev
+
       - name: Crear el rol de la aplicación (dte_app)
         env:
           PGPASSWORD: dte
@@ -80,6 +83,13 @@ jobs:
       - name: Pruebas
         run: php artisan test
 
+      - name: Respaldo y prueba de restauración (pg_dump 17)
+        run: |
+          php artisan migrate:fresh --seed --force
+          docker run --rm --network host -v "$PWD/scripts:/s:ro" -v "$RUNNER_TEMP:/r" \
+            -e PGHOST=127.0.0.1 -e PGUSER=dte -e PGPASSWORD=dte -e PGDATABASE=dte_test \
+            postgres:17-alpine sh -c 'apk add --no-cache bash >/dev/null && bash /s/respaldo-bd.sh /r && bash /s/probar-restauracion.sh "$(ls -t /r/*.dump | head -1)" dte_test'
+
   docker:
     name: Servicios Docker
     runs-on: ubuntu-latest
@@ -88,6 +98,16 @@ jobs:
       - run: docker compose config -q
       - name: Construir el firmador oficial
         run: docker compose build firmador
+      - name: Construir la imagen de producción de la aplicación
+        run: docker build -f docker/app/Dockerfile -t escobarnet-dte-app:ci .
+      - name: La imagen arranca y responde /up
+        run: |
+          docker run -d --name app -p 8080:8080 \
+            -e APP_KEY="base64:$(openssl rand -base64 32)" -e DTE_SECRETS_KEY="base64:$(openssl rand -base64 32)" \
+            -e APP_ENV=production -e DB_CONNECTION=pgsql -e CACHE_STORE=array -e SESSION_DRIVER=array -e QUEUE_CONNECTION=sync \
+            escobarnet-dte-app:ci
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/up && exit 0; sleep 2; done
+          docker logs app; exit 1
 
   assets:
     name: Assets (Vite + Tailwind)
@@ -99,4 +119,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Vulnerabilidades conocidas (npm, altas y críticas)
+        run: npm audit --omit=dev --audit-level=high
       - run: npm run build

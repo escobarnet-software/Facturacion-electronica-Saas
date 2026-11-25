@@ -13,3 +13,7 @@ Schedule::command('dte:contingencia:procesar')->everyFifteenMinutes()->withoutOv
 
 // Cobro de suscripciones: el día 1 de cada mes, por el mes anterior (hora de El Salvador).
 Schedule::command('plataforma:facturar')->monthlyOn(1, '06:17')->timezone('America/El_Salvador')->withoutOverlapping();
+
+// Monitoreo: healthcheck de Hacienda y vigilancia con alertas, cada minuto.
+Schedule::command('dte:hacienda:sondear')->everyMinute()->withoutOverlapping();
+Schedule::command('plataforma:vigilar')->everyMinute()->withoutOverlapping();

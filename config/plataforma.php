@@ -13,4 +13,10 @@ return [
 
     // Pasarela de cobro. TODO(decision-3): pendiente; por ahora solo pagos registrados a mano.
     'pasarela' => 'manual',
+
+    // Alertas a los superadmin (plataforma:vigilar, cada minuto).
+    'alertas' => [
+        'cola_maxima' => (int) env('ALERTA_COLA_MAXIMA', 500),
+        'silencio_minutos' => (int) env('ALERTA_SILENCIO_MINUTOS', 30),
+    ],
 ];
