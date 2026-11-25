@@ -84,6 +84,8 @@ jobs:
         run: php artisan test
 
       - name: Respaldo y prueba de restauración (pg_dump 17)
+        env:
+          DB_DATABASE: dte_test
         run: |
           php artisan migrate:fresh --seed --force
           docker run --rm --network host -v "$PWD/scripts:/s:ro" -v "$RUNNER_TEMP:/r" \
