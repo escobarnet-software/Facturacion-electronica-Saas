@@ -42,6 +42,7 @@
         <env name="DTE_SECRETS_KEY" value="base64:cHJ1ZWJhcy1sbGF2ZS1mYWxzYS0zMi1ieXRlcyEhISE="/>
         <env name="DTE_CERTIFICADOS_PATH" value="storage/framework/testing/certificados"/>
         <env name="DTE_ARCHIVO_DISCO" value="local"/>
+        <env name="DTE_SIMULADOR_URL" value="" force="true"/>
         <env name="DTE_ENTREGA_AUTOMATICA" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

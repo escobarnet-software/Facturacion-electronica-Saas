@@ -8,6 +8,7 @@ use App\Plataforma\Soporte;
 use App\Tenancy\Tenancy;
 use Closure;
 use Illuminate\Http\Request;
+use Livewire\Mechanisms\HandleRequests\HandleRequests;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -47,6 +48,14 @@ final class FijarEmpresaActiva
                 $this->tenancy->limpiar();
                 abort(403, 'La cuenta de su empresa está suspendida. Comuníquese con Escobar Net.');
             }
+        }
+
+        // En /livewire/update este middleware corre como «persistente» en un pipeline aparte, ANTES de la acción
+        // del componente: la empresa debe seguir fijada durante la acción y se limpia al terminar la petición.
+        if (app(HandleRequests::class)->isLivewireRequest()) {
+            app()->terminating(fn () => $this->tenancy->limpiar());
+
+            return $next($request);
         }
 
         try {

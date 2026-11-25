@@ -20,7 +20,7 @@
 
     <div class="overflow-x-auto rounded border bg-white">
         <table class="w-full text-sm">
-            <thead><tr class="bg-slate-100 text-left"><th class="p-2">Tipo</th><th>Número de control</th><th>Receptor</th><th>Documento</th><th>Generación</th><th>Recepción</th><th class="text-right">Monto</th><th class="text-right">IVA</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr class="bg-slate-100 text-left"><th class="p-2">Tipo</th><th>Número de control</th><th>Receptor</th><th>Documento</th><th>Generación</th><th>Recepción</th><th class="text-right">Monto</th><th class="pr-3 text-right">IVA</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody>
             @forelse ($documentos as $d)
                 <tr class="border-t {{ $d->estado === \App\Enums\EstadoDte::Rechazado ? 'bg-red-50 text-red-800' : '' }}" wire:key="d-{{ $d->id }}">
@@ -31,7 +31,7 @@
                     <td>{{ $d->fecha_emision->format('d/m/Y') }}</td>
                     <td>{{ $d->fh_procesamiento?->setTimezone('America/El_Salvador')->format('d/m/Y H:i') }}</td>
                     <td class="text-right">${{ number_format((float) $d->getRawOriginal('total_pagar'), 2) }}</td>
-                    <td class="text-right">${{ number_format((float) $d->getRawOriginal('total_iva'), 2) }}</td>
+                    <td class="pr-3 text-right">${{ number_format((float) $d->getRawOriginal('total_iva'), 2) }}</td>
                     <td>{{ $d->estado->etiqueta() }}</td>
                     <td class="space-x-2 whitespace-nowrap">
                         @if ($d->jws)

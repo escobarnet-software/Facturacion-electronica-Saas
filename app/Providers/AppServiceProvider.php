@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Enums\Rol;
+use App\Http\Middleware\Exigir2FA;
+use App\Http\Middleware\FijarEmpresaActiva;
 use App\Models\TokenApi;
 use App\Models\Usuario;
 use App\Plataforma\MetricasHacienda;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +33,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Modo demo: Hacienda (pruebas) y firmador simulados en local. Nunca en producción.
+        $simulador = config('dte.simulador_url');
+        if (is_string($simulador) && $simulador !== '' && ! $this->app->environment('production')
+            && preg_match('#^http://(127\.0\.0\.1|localhost)(:\d+)?$#', $simulador)) {
+            config(['dte.api.base_url.00' => $simulador, 'dte.firmador.url' => $simulador.'/firmardocumento/']);
+        }
+
+        // Las peticiones de actualización de Livewire (/livewire/update) deben volver a fijar la empresa activa
+        // (EmpresaScope + RLS) y exigir el 2FA, igual que la ruta donde vive el componente.
+        Livewire::addPersistentMiddleware([FijarEmpresaActiva::class, Exigir2FA::class]);
+
         // Métricas de Hacienda (latencia y errores por endpoint) para el superadmin.
         Event::listen(ResponseReceived::class, [MetricasHacienda::class, 'respuesta']);
         Event::listen(ConnectionFailed::class, [MetricasHacienda::class, 'falla']);
