@@ -160,7 +160,7 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
 ---
 
 ### Estado
-- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12 · [ ] 13 · [ ] 14 · [ ] 15
+- [x] Paso 0 · [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12 · [x] 13 · [ ] 14 · [ ] 15
 
 #### Notas de estado
 - **Paso 0 (2026-11-11):** Laravel 13 (PHP 8.3), Pest 4, Pint, Larastan nivel 6, Horizon, CI en GitHub Actions.
@@ -308,3 +308,16 @@ Una o dos empresas reales en pruebas, después en producción. Recoger los `codi
   secreto se muestra una sola vez. Mensajes de validación en español (`lang/es`).
   - Pendiente: emisión por API de los tipos 04–15 (hoy, igual que el panel, solo 01 y 03).
   - Paso 14: proxy de salida para los webhooks (además de la validación de la URL).
+- **Paso 13 (2026-11-25):** `planes` (dato de plataforma, configurable en el superadmin), `suscripciones`,
+  `consumos_mensuales`, `cobros` y `accesos_soporte` (RLS). Cada documento creado cuenta en el consumo (upsert
+  atómico); al 80 % y al 100 % se avisa una sola vez (bitácora + correo). **La emisión nunca se bloquea por el plan.**
+  Los límites (establecimientos, usuarios, API) se aplican solo al configurar. `plataforma:facturar` (el día 1 de cada
+  mes): plan + excedente × precio adicional, exacto con Decimal, idempotente; Escobar Net emite el CCF/FE de cobro con
+  la propia plataforma (`PLATAFORMA_EMPRESA_ID`). Superadmin `/admin` (2FA): empresas (alta, plan, suspensión, consumo),
+  estado (latencia y errores de Hacienda por endpoint desde `hacienda_metricas`, colas, contingencias, documentos por
+  día, rechazos por `codigoMsg`), planes y cobros. Soporte: solo con permiso temporal vigente otorgado por el dueño
+  (máx. 72 h, revocable), rol de consulta, sin credenciales, con bitácora. Empresa suspendida: sin panel ni API.
+  `plataforma:superadmin {email}` para designar superadmins.
+  - **Decisión pendiente 3 (pasarela de cobro):** sin decidir. Hay una interfaz `PasarelaCobro` y solo el registro
+    manual del pago (`CobroManual`).
+  - Paso 14: invitar al dueño por correo con un enlace de un solo uso (hoy, contraseña temporal mostrada una vez).

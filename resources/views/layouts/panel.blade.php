@@ -39,12 +39,19 @@
                 <a href="{{ route('panel.clientes') }}" class="hover:underline">Clientes</a>
                 <a href="{{ route('panel.establecimientos') }}" class="hover:underline">Establecimientos</a>
             @endcan
-            @can('administrar-empresa')<a href="{{ route('panel.api') }}" class="hover:underline">API</a>
+            @can('administrar-empresa')<a href="{{ route('panel.suscripcion') }}" class="hover:underline">Plan y soporte</a>
+            <a href="{{ route('panel.api') }}" class="hover:underline">API</a>
             <a href="{{ route('panel.onboarding') }}" class="hover:underline">Configuración</a>@endcan
         </nav>
         <form method="POST" action="{{ route('logout') }}" class="ml-auto">@csrf<button class="text-sm text-slate-500 hover:underline">Salir</button></form>
     </div>
 </header>
+@if (session()->has(\App\Plataforma\Soporte::SESION))
+    <div class="bg-amber-100 px-4 py-2 text-center text-sm" role="status">
+        Modo soporte (solo consulta) con permiso temporal de la empresa.
+        <form method="POST" action="{{ route('admin.soporte.salir') }}" class="inline">@csrf<button class="underline">Salir del modo soporte</button></form>
+    </div>
+@endif
 <main class="mx-auto max-w-7xl px-4 py-6">
     {{ $slot }}
 </main>

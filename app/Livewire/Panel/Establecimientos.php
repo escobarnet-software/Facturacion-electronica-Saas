@@ -5,6 +5,7 @@ namespace App\Livewire\Panel;
 use App\Models\Bitacora;
 use App\Models\Establecimiento;
 use App\Models\PuntoVenta;
+use App\Plataforma\Limites;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
@@ -35,6 +36,11 @@ class Establecimientos extends Component
             'establecimiento.nombre' => 'required|string|max:150',
             'establecimiento.cod_estable_mh' => ['required', 'regex:/^[MBSP]\d{3}$/'],
         ], ['establecimiento.cod_estable_mh.regex' => 'El código de Hacienda tiene la forma M001, S001, B001 o P001.'])['establecimiento'];
+        if (($limite = Limites::establecimiento()) !== null) {
+            $this->addError('establecimiento.nombre', $limite);
+
+            return;
+        }
         $e = Establecimiento::query()->create($d);
         Bitacora::registrar('establecimiento.creado', $e);
         $this->reset('establecimiento');

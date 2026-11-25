@@ -5,6 +5,8 @@ use App\Http\Controllers\DocumentoDescargaController;
 use App\Http\Controllers\EmpresaActivaController;
 use App\Http\Controllers\LibroDescargaController;
 use App\Http\Controllers\PortalDteController;
+use App\Http\Controllers\SoporteController;
+use App\Livewire\Admin;
 use App\Livewire\Panel;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Route;
@@ -43,8 +45,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/reportes/{libro}.{formato}', LibroDescargaController::class)
             ->whereIn('libro', ['consumidor', 'contribuyentes', 'compras'])->whereIn('formato', ['csv', 'xlsx'])->name('panel.reportes.descargar');
         Route::get('/panel/api', Panel\ApiWebhooks::class)->name('panel.api');
+        Route::get('/panel/plan', Panel\Suscripcion::class)->name('panel.suscripcion');
         Route::get('/panel/configuracion', Panel\Onboarding::class)->name('panel.onboarding');
 
         Route::post('/empresa-activa', EmpresaActivaController::class)->name('empresa-activa');
+
+        // Superadmin de Escobar Net (2FA obligatorio).
+        Route::middleware('can:superadmin')->prefix('admin')->name('admin.')->group(function () {
+            Route::get('/', Admin\Empresas::class)->name('empresas');
+            Route::get('/estado', Admin\Estado::class)->name('estado');
+            Route::get('/planes', Admin\Planes::class)->name('planes');
+            Route::get('/cobros', Admin\Cobros::class)->name('cobros');
+            Route::post('/soporte/{empresa}', [SoporteController::class, 'entrar'])->whereNumber('empresa')->name('soporte.entrar');
+        });
+        Route::post('/soporte/salir', [SoporteController::class, 'salir'])->name('admin.soporte.salir');
     });
 });

@@ -5,8 +5,10 @@ use App\Dte\Support\CodigoGeneracion;
 use App\Enums\EstadoDte;
 use App\Enums\Rol;
 use App\Jobs\Middleware\ConEmpresa;
+use App\Models\AccesoSoporte;
 use App\Models\Bitacora;
 use App\Models\Cliente;
+use App\Models\Cobro;
 use App\Models\Contingencia;
 use App\Models\Correlativo;
 use App\Models\Dte;
@@ -18,9 +20,11 @@ use App\Models\EmpresaUsuario;
 use App\Models\Establecimiento;
 use App\Models\Evento;
 use App\Models\Lote;
+use App\Models\Plan;
 use App\Models\Producto;
 use App\Models\PruebaMinima;
 use App\Models\PuntoVenta;
+use App\Models\Suscripcion;
 use App\Models\Webhook;
 use App\Models\WebhookEntrega;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +34,7 @@ use Illuminate\Support\Facades\DB;
 | empresa B, ni por Eloquent (EmpresaScope) ni por SQL directo (RLS).
 */
 
-const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas', 'dte_recibidos', 'api_idempotencia', 'webhooks', 'webhook_entregas'];
+const TABLAS_DE_NEGOCIO = ['establecimientos', 'puntos_venta', 'empresa_usuario', 'empresa_credenciales', 'bitacora', 'correlativos', 'dtes', 'dte_eventos_internos', 'eventos', 'contingencias', 'lotes', 'productos', 'clientes', 'pruebas_minimas', 'dte_recibidos', 'api_idempotencia', 'webhooks', 'webhook_entregas', 'suscripciones', 'consumos_mensuales', 'cobros', 'accesos_soporte'];
 
 beforeEach(function () {
     $this->a = crearEmpresaDePrueba();
@@ -50,6 +54,10 @@ beforeEach(function () {
             DteRecibido::query()->create(['tipo' => '03', 'codigo_generacion' => CodigoGeneracion::nuevo(), 'numero_control' => 'DTE-03-M001P001-000000000000001', 'fecha_emision' => now()->toDateString(), 'emisor_nit' => '06140101851014', 'emisor_nombre' => 'Proveedor', 'sello_recibido' => str_repeat('A', 40), 'json_texto' => '{}', 'json_original' => [], 'firma_coincide' => true, 'origen' => 'subida']);
             DB::table('api_idempotencia')->insert(['empresa_id' => $datos['empresa']->id, 'clave' => 'clave-1', 'huella' => str_repeat('0', 64), 'estado' => 'completado', 'created_at' => now(), 'updated_at' => now()]);
             $w = Webhook::query()->create(['url' => 'https://hooks.cliente.test/dte', 'secreto' => 'whsec_prueba', 'eventos' => ['dte.transmitido']]);
+            $plan = Plan::query()->firstOrCreate(['codigo' => 'aislamiento'], ['nombre' => 'Plan', 'precio_mensual' => '10.00']);
+            Suscripcion::query()->create(['plan_id' => $plan->id, 'inicio' => now()->toDateString()]);
+            Cobro::query()->create(['periodo' => '2026-10', 'plan_id' => $plan->id, 'cargo_plan' => '10.00', 'documentos' => 1, 'excedente' => 0, 'cargo_excedente' => '0.00', 'subtotal' => '10.00']);
+            AccesoSoporte::query()->create(['otorgado_por' => $datos['usuario']->id, 'motivo' => 'Prueba', 'expira_at' => now()->addHour()]);
             WebhookEntrega::query()->create(['webhook_id' => $w->id, 'uuid' => CodigoGeneracion::nuevo(), 'evento' => 'dte.transmitido', 'cuerpo' => '{}']);
         });
     }

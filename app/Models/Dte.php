@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EstadoDte;
+use App\Plataforma\Consumo;
 use App\Tenancy\PerteneceAEmpresa;
 use App\Webhooks\Webhooks;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +48,12 @@ class Dte extends Model
     protected $table = 'dtes';
 
     protected $guarded = ['id'];
+
+    protected static function booted(): void
+    {
+        // Cada documento creado cuenta en el consumo del mes (nunca bloquea la emisión).
+        static::created(fn (Dte $dte) => Consumo::registrar($dte));
+    }
 
     protected function casts(): array
     {

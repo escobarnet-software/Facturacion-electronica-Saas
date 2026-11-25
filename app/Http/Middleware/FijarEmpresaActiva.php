@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Empresa;
 use App\Models\Usuario;
+use App\Plataforma\Soporte;
 use App\Tenancy\Tenancy;
 use Closure;
 use Illuminate\Http\Request;
@@ -29,8 +31,9 @@ final class FijarEmpresaActiva
 
         $this->tenancy->fijarUsuario($usuario->id);
 
-        $empresaId = $usuario->empresa_activa_id;
-        if ($empresaId === null || ! $usuario->perteneceA($empresaId)) {
+        $soporte = app(Soporte::class)->empresaDeSesion($usuario);
+        $empresaId = $soporte ?? $usuario->empresa_activa_id;
+        if ($soporte === null && ($empresaId === null || ! $usuario->perteneceA($empresaId))) {
             $empresaId = $this->primeraEmpresa($usuario);
             if ($empresaId !== null && $usuario->empresa_activa_id !== $empresaId) {
                 $usuario->forceFill(['empresa_activa_id' => $empresaId])->save();
@@ -39,6 +42,11 @@ final class FijarEmpresaActiva
 
         if ($empresaId !== null) {
             $this->tenancy->establecer($empresaId);
+            // Empresa suspendida por Escobar Net: sin acceso al panel (el soporte sí puede consultar).
+            if ($soporte === null && Empresa::query()->whereKey($empresaId)->value('estado') === 'suspendida') {
+                $this->tenancy->limpiar();
+                abort(403, 'La cuenta de su empresa está suspendida. Comuníquese con Escobar Net.');
+            }
         }
 
         try {

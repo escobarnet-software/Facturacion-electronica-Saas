@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Rol;
+use App\Plataforma\Soporte;
 use App\Tenancy\Tenancy;
 use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -82,8 +83,12 @@ class Usuario extends Authenticatable
     public function rolEn(int $empresaId): ?Rol
     {
         $rol = $this->empresas()->whereKey($empresaId)->value('empresa_usuario.rol');
+        if (is_string($rol)) {
+            return Rol::from($rol);
+        }
 
-        return is_string($rol) ? Rol::from($rol) : null;
+        // Soporte de Escobar Net: solo consulta, y solo con el permiso temporal vigente de la empresa.
+        return $this->es_superadmin && app(Soporte::class)->empresaDeSesion($this) === $empresaId ? Rol::Consulta : null;
     }
 
     /** Dueños de alguna empresa y superadmin deben tener 2FA confirmado. */

@@ -5,9 +5,12 @@ namespace App\Providers;
 use App\Enums\Rol;
 use App\Models\TokenApi;
 use App\Models\Usuario;
+use App\Plataforma\MetricasHacienda;
 use App\Support\Seguridad\Secretos;
 use App\Tenancy\Tenancy;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Client\Events\ConnectionFailed;
+use Illuminate\Http\Client\Events\ResponseReceived;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -27,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Métricas de Hacienda (latencia y errores por endpoint) para el superadmin.
+        Event::listen(ResponseReceived::class, [MetricasHacienda::class, 'respuesta']);
+        Event::listen(ConnectionFailed::class, [MetricasHacienda::class, 'falla']);
+        Gate::define('superadmin', fn (Usuario $u) => $u->es_superadmin);
+
         // API: tokens de empresa con permisos; límite de peticiones por token.
         Sanctum::usePersonalAccessTokenModel(TokenApi::class);
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by('token:'.($r->bearerToken() !== null ? hash('sha256', $r->bearerToken()) : $r->ip()))

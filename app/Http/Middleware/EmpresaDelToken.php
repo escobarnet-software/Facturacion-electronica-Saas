@@ -19,6 +19,11 @@ final class EmpresaDelToken
         abort_unless($empresa instanceof Empresa, 401, 'Token inválido o ausente.');
 
         $this->tenancy->establecer($empresa->id);
+        if ($empresa->estado === 'suspendida') {
+            $this->tenancy->limpiar();
+
+            return response()->json(['message' => 'La cuenta de la empresa está suspendida. Comuníquese con Escobar Net.'], 403);
+        }
         try {
             return $next($request);
         } finally {

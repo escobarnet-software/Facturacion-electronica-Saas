@@ -7,6 +7,7 @@ use App\Models\Empresa;
 use App\Models\TokenApi;
 use App\Models\Webhook;
 use App\Models\WebhookEntrega;
+use App\Plataforma\Limites;
 use App\Tenancy\Tenancy;
 use App\Webhooks\DestinoWebhook;
 use Illuminate\Contracts\View\View;
@@ -49,6 +50,11 @@ class ApiWebhooks extends Component
             'permisos' => 'required|array|min:1',
             'permisos.*' => 'in:'.implode(',', array_keys(TokenApi::PERMISOS)),
         ]);
+        if (($limite = Limites::api()) !== null) {
+            $this->error = $limite;
+
+            return;
+        }
         $empresa = Empresa::query()->findOrFail($tenancy->empresaId());
         $nuevo = $empresa->createToken($this->nombreToken, array_values($this->permisos));
         Bitacora::registrar('api.token_creado', $nuevo->accessToken, ['nombre' => $this->nombreToken, 'permisos' => $this->permisos]);
