@@ -40,7 +40,7 @@ final class Plazos
     {
         $dias = array_map(fn (string $md) => "{$anio}-{$md}", (array) config('dte.feriados.fijos', []));
 
-        $pascua = CarbonImmutable::create($anio, 3, 21, 0, 0, 0, self::zona())->addDays(easter_days($anio));
+        $pascua = self::domingoDePascua($anio);
         $santos = ['jueves' => -3, 'viernes' => -2, 'sabado' => -1];
         foreach ((array) config('dte.feriados.semana_santa', []) as $dia) {
             $dias[] = $pascua->addDays($santos[$dia])->format('Y-m-d');
@@ -49,6 +49,30 @@ final class Plazos
         $adicionales = array_filter((array) config('dte.feriados.adicionales', []), fn ($d) => str_starts_with((string) $d, "{$anio}-"));
 
         return array_values(array_unique([...$dias, ...$adicionales]));
+    }
+
+    /**
+     * Domingo de Pascua (calendario gregoriano), algoritmo anónimo de Meeus/Jones/Butcher.
+     * Sin depender de la extensión «calendar» de PHP (easter_days), que no siempre está instalada.
+     */
+    public static function domingoDePascua(int $anio): CarbonImmutable
+    {
+        $a = $anio % 19;
+        $b = intdiv($anio, 100);
+        $c = $anio % 100;
+        $d = intdiv($b, 4);
+        $e = $b % 4;
+        $f = intdiv($b + 8, 25);
+        $g = intdiv($b - $f + 1, 3);
+        $h = (19 * $a + $b - $d - $g + 15) % 30;
+        $i = intdiv($c, 4);
+        $k = $c % 4;
+        $l = (32 + 2 * $e + 2 * $i - $h - $k) % 7;
+        $m = intdiv($a + 11 * $h + 22 * $l, 451);
+        $mes = intdiv($h + $l - 7 * $m + 114, 31);
+        $dia = (($h + $l - 7 * $m + 114) % 31) + 1;
+
+        return CarbonImmutable::create($anio, $mes, $dia, 0, 0, 0, self::zona());
     }
 
     /** Último instante del 10.º día hábil del mes siguiente al de $fecha. */

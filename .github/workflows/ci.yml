@@ -129,6 +129,11 @@ jobs:
           echo "Después del login: $destino"
           [[ "$destino" == */panel ]]
           curl -fsS -b c.txt http://127.0.0.1:8000/panel/emitir | grep -q "Pupusa revuelta"
+          # Cada pantalla del panel debe abrir dentro de la imagen (detecta extensiones de PHP que falten).
+          for p in panel panel/emitir panel/caja panel/documentos panel/invalidaciones panel/recibidos panel/reportes panel/contingencia panel/productos panel/clientes panel/establecimientos; do
+            codigo=$(curl -sS -b c.txt -o /dev/null -w '%{http_code}' "http://127.0.0.1:8000/$p")
+            echo "$p → $codigo"; [[ "$codigo" == "200" ]]
+          done
       - name: Pruebas mínimas de Hacienda contra el simulador (como en la guía)
         run: |
           docker compose -f docker-compose.demo.yml exec -T web php artisan dte:pruebas-minimas 06141507261015 --tipos=01,03,05,invalidacion,contingencia

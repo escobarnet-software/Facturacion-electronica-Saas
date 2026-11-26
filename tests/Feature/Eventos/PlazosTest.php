@@ -86,3 +86,17 @@ it('contingencia: evento dentro de 24 h del cese y documentos dentro de 72 h del
         ->and($this->plazos->dentroDelPlazo(sv('2026-11-14 11:00:00'), $documentos))->toBeTrue()
         ->and($this->plazos->dentroDelPlazo(sv('2026-11-14 11:00:01'), $documentos))->toBeFalse();
 });
+
+it('calcula el Domingo de Pascua sin la extensión calendar (Semana Santa en los plazos)', function () {
+    $fechas = [2024 => '2024-03-31', 2025 => '2025-04-20', 2026 => '2026-04-05', 2027 => '2027-03-28', 2028 => '2028-04-16', 2038 => '2038-04-25', 2285 => '2285-03-22'];
+    foreach ($fechas as $anio => $esperada) {
+        expect(Plazos::domingoDePascua($anio)->format('Y-m-d'))->toBe($esperada);
+    }
+    // Coincide con easter_days() donde la extensión existe.
+    if (function_exists('easter_days')) {
+        foreach (range(1990, 2100) as $anio) {
+            expect(Plazos::domingoDePascua($anio)->format('Y-m-d'))
+                ->toBe(CarbonImmutable::create($anio, 3, 21)->addDays(easter_days($anio))->format('Y-m-d'));
+        }
+    }
+});
