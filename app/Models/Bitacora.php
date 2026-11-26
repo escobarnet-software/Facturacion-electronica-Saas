@@ -41,6 +41,14 @@ class Bitacora extends Model
         static::deleting(fn () => throw new LogicException('La bitácora es inmutable.'));
     }
 
+    /** Id de la PERSONA autenticada (null para la API, el scheduler o la cola). */
+    public static function usuarioId(): ?int
+    {
+        $actor = Auth::user();
+
+        return $actor instanceof Usuario ? $actor->id : null;
+    }
+
     /**
      * Registra un evento para la empresa activa.
      *
@@ -51,9 +59,16 @@ class Bitacora extends Model
         $empresaId = app(Tenancy::class)->empresaId();
         $peticion = app()->runningInConsole() ? null : request();
 
+        // Por la API el «usuario» autenticado es la EMPRESA dueña del token: no es una persona.
+        $actor = Auth::user();
+        if ($actor instanceof Empresa) {
+            $token = $actor->currentAccessToken();
+            $datos = [...$datos, 'via' => 'api', 'token' => $token instanceof TokenApi ? $token->name : null];
+        }
+
         return static::query()->create([
             'empresa_id' => $empresaId,
-            'usuario_id' => Auth::id(),
+            'usuario_id' => self::usuarioId(),
             'accion' => $accion,
             'entidad_tipo' => $entidad ? $entidad::class : null,
             'entidad_id' => $entidad?->getKey(),

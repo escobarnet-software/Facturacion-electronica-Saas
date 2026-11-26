@@ -21,6 +21,11 @@
 | dentro de <main> toman el estilo base aunque no lleven clase (pantallas antiguas).
 */
 @layer base {
+    [x-cloak] { display: none !important; }
+    progress.barra { @apply h-2 w-full appearance-none overflow-hidden rounded-full bg-slate-200 accent-emerald-500; }
+    progress.barra::-webkit-progress-bar { @apply bg-slate-200; }
+    progress.barra::-webkit-progress-value { @apply rounded-full bg-emerald-500; }
+    progress.barra::-moz-progress-bar { @apply rounded-full bg-emerald-500; }
     *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-slate-200, currentColor); }
     body { @apply bg-slate-100 text-slate-800 antialiased; }
     h1 { @apply text-2xl font-bold tracking-tight text-tinta; }

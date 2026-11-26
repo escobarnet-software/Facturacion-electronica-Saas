@@ -99,16 +99,25 @@ class Onboarding extends Component
             'ambienteCredencial' => 'required|in:00,01',
             'pwdApi' => 'required|string|min:8|max:30',
             'pwdPrivada' => 'required|string|min:1|max:100',
-            'certificado' => 'required|file|max:512',
+            'certificado' => 'required|file|max:512|extensions:crt,xml',
         ], [], ['pwdApi' => 'contraseña de la API', 'pwdPrivada' => 'contraseña de la llave privada']);
+
+        /** @var TemporaryUploadedFile $subido */
+        $subido = $this->certificado;
+        $contenidoCertificado = (string) file_get_contents($subido->getRealPath());
+        try {
+            AlmacenCertificados::validar($contenidoCertificado);
+        } catch (\InvalidArgumentException $e) {
+            $this->addError('certificado', $e->getMessage());
+
+            return;
+        }
 
         $e = $this->modelo();
         $credencial = EmpresaCredencial::query()->firstOrNew(['ambiente' => $this->ambienteCredencial]);
         $credencial->usuario_api = $e->nit;
         $credencial->establecerSecretos($this->pwdApi, $this->pwdPrivada)->save();
-        /** @var TemporaryUploadedFile $archivo */
-        $archivo = $this->certificado;
-        $almacen->guardar($e, $credencial, (string) file_get_contents($archivo->getRealPath()));
+        $almacen->guardar($e, $credencial, $contenidoCertificado);
         Bitacora::registrar('credenciales.cargadas', $credencial, ['ambiente' => $this->ambienteCredencial]);
 
         // Nunca se devuelven a la pantalla.

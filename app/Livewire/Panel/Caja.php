@@ -6,6 +6,7 @@ use App\Dte\Emision\EmisionDte;
 use App\Dte\Emision\LineaSolicitud;
 use App\Dte\Excepciones\DteException;
 use App\Dte\Modelos\Pago;
+use App\Enums\EstadoDte;
 use App\Models\Dte;
 use App\Models\Empresa;
 use App\Models\Establecimiento;
@@ -106,9 +107,11 @@ class Caja extends Component
         $dte->refresh();
         $this->ultimoDteId = $dte->id;
         $this->carrito = [];
-        $this->mensaje = $dte->estado->tieneSello()
-            ? "Factura {$dte->numero_control} transmitida."
-            : "Factura {$dte->numero_control} emitida: {$dte->estado->etiqueta()}.";
+        $this->mensaje = match (true) {
+            $dte->estado->tieneSello() => "Factura {$dte->numero_control} transmitida y sellada por Hacienda.",
+            $dte->estado === EstadoDte::Transitorio => "Factura {$dte->numero_control} emitida en contingencia: ya puede entregarla; se transmitirá sola al volver Hacienda.",
+            default => "Factura {$dte->numero_control} emitida. Se está enviando a Hacienda; el sello aparecerá en Documentos en unos segundos.",
+        };
     }
 
     /**

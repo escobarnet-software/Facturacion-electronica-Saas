@@ -11,9 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Cabeceras de seguridad para todas las respuestas (OWASP ASVS V14.4).
  *
- *  - CSP con nonce por petición para los scripts (Vite y Livewire lo usan solos).
- *    'unsafe-eval' sigue siendo necesario para Alpine/Livewire en modo normal
- *    (TODO(seguridad): evaluar livewire.csp_safe para retirarlo).
+ *  - CSP estricta con nonce por petición para scripts y estilos (Vite y Livewire lo usan solos),
+ *    sin 'unsafe-eval' ni 'unsafe-inline': Livewire corre en su modo compatible con CSP (csp_safe).
  *  - HSTS solo sobre HTTPS. Sin incrustar en marcos (clickjacking).
  */
 final class CabecerasSeguridad
@@ -32,6 +31,9 @@ final class CabecerasSeguridad
         $h->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
         $h->set('Cross-Origin-Opener-Policy', 'same-origin');
         $h->remove('X-Powered-By');
+        if (! headers_sent()) {
+            header_remove('X-Powered-By'); // la añade PHP (expose_php), no Laravel
+        }
         if ($request->isSecure()) {
             $h->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
@@ -40,8 +42,8 @@ final class CabecerasSeguridad
         if (! $request->is('horizon', 'horizon/*') && ! Vite::isRunningHot() && ! $h->has('Content-Security-Policy')) {
             $h->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval'",
-                "style-src 'self' 'unsafe-inline'",
+                "script-src 'self' 'nonce-{$nonce}'",
+                "style-src 'self' 'nonce-{$nonce}'",
                 "img-src 'self' data:",
                 "font-src 'self'",
                 "connect-src 'self'",

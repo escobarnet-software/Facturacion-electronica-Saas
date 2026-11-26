@@ -3,10 +3,12 @@
 use App\Enums\Rol;
 use App\Jobs\EnviarWebhook;
 use App\Livewire\Panel\ApiWebhooks;
+use App\Models\Bitacora;
 use App\Models\CatValor;
 use App\Models\Contingencia;
 use App\Models\Dte;
 use App\Models\Empresa;
+use App\Models\Usuario;
 use App\Models\Webhook;
 use App\Models\WebhookEntrega;
 use App\Webhooks\DestinoWebhook;
@@ -306,4 +308,18 @@ it('el documento OpenAPI es válido y documenta todas las rutas de la API', func
         expect(isset($doc['paths'][$path][$metodo]))->toBeTrue("Falta {$metodo} {$path} en OpenAPI");
     }
     expect(array_keys($doc['webhooks']))->toBe(array_keys(Webhook::EVENTOS));
+});
+
+it('la bitácora registra las acciones de la API como «api» con el nombre del token, nunca como un usuario', function () {
+    $otro = Usuario::factory()->create(); // un usuario cualquiera, para que un id coincidente no oculte el error
+    $token = $this->d['empresa']->createToken('POS sucursal centro', ['dte:emitir'])->plainTextToken;
+
+    api('POST', '/dte/01', $token, ventaApi())->assertCreated();
+
+    tenancy()->establecer($this->d['empresa']->id);
+    $registro = Bitacora::query()->where('accion', 'dte.emitido')->latest('id')->first();
+    expect($registro->usuario_id)->toBeNull()
+        ->and($registro->datos['via'])->toBe('api')
+        ->and($registro->datos['token'])->toBe('POS sucursal centro');
+    unset($otro);
 });

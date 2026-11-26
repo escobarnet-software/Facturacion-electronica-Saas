@@ -71,7 +71,7 @@
         <div class="mt-3 space-y-2">
             @foreach ($pruebas as $p)
                 <div><div class="flex justify-between text-sm"><span>{{ $p->tipo }} · {{ $p->estado }}</span><span>{{ $p->exitosas }}/{{ $p->requeridas }}</span></div>
-                    <div class="h-2 overflow-hidden rounded-full bg-slate-200"><div class="h-2 rounded-full bg-emerald-500" style="width: {{ $p->porcentaje() }}%"></div></div>
+                    <progress class="barra" max="100" value="{{ $p->porcentaje() }}" aria-label="Avance de {{ $p->tipo }}">{{ $p->porcentaje() }} %</progress>
                     @if ($p->ultimo_error && $p->estado !== 'completada')<p class="text-xs text-red-700">{{ $p->ultimo_error }}</p>@endif</div>
             @endforeach
         </div>

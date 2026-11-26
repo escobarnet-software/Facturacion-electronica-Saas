@@ -5,10 +5,12 @@ use App\Http\Middleware\CabecerasSeguridad;
 use App\Http\Middleware\EmpresaDelToken;
 use App\Http\Middleware\Exigir2FA;
 use App\Http\Middleware\FijarEmpresaActiva;
+use App\Http\Middleware\ProtegerFormularios;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Laravel\Sanctum\Exceptions\MissingAbilityException;
@@ -35,6 +37,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // La empresa activa se fija ANTES de resolver los modelos de la ruta ({dte}):
         // así EmpresaScope y RLS ya filtran al buscarlos (otra empresa → 404).
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: FijarEmpresaActiva::class);
+
+        // CSRF + origen sin la cookie XSRF-TOKEN (no la usa nadie y no es HttpOnly).
+        $middleware->web(replace: [PreventRequestForgery::class => ProtegerFormularios::class]);
 
         // Cabeceras de seguridad en todas las respuestas (panel, portal, API).
         $middleware->append(CabecerasSeguridad::class);

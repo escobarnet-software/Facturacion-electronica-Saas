@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('titulo', 'Escobar Net DTE')</title>
     @vite(['resources/css/app.css'])
-    <style>
+    <style nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         .acceso .tarjeta { background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:2rem; box-shadow:0 10px 30px -12px rgba(15,27,45,.25); }
         .acceso h1 { font-size:1.5rem; font-weight:700; color:#0f1b2d; margin-bottom:.25rem; }
         .acceso label { display:block; margin:1rem 0 .35rem; font-size:.875rem; font-weight:600; color:#334155; }

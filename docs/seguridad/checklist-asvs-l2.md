@@ -18,6 +18,7 @@ Las pruebas automatizadas que lo respaldan se indican entre paréntesis.
 - ✅ Credenciales del portal de Hacienda nunca se guardan.
 
 ## V3 Sesiones
+- ✅ Sin cookie `XSRF-TOKEN` legible por JavaScript (el token va en la página) (`SeguridadTest`).
 - ✅ Sesión regenerada al autenticarse; cookie HttpOnly, SameSite=Lax.
 - ✅ En producción: `SESSION_SECURE_COOKIE` y `SESSION_ENCRYPT` (`plataforma:revisar-produccion`).
 - ✅ La sesión del panel no sirve para la API (`ApiPublicaTest`).
@@ -63,12 +64,25 @@ Las pruebas automatizadas que lo respaldan se indican entre paréntesis.
 - ✅ Idempotencia de la API (`ApiPublicaTest`). La emisión nunca se bloquea por el plan (`PlataformaTest`).
 
 ## V12 Archivos
-- ✅ Certificados en disco privado; recibidos limitados a JSON de 512 KB.
+- ✅ Certificados en disco privado; solo XML bien formado sin DTD/ENTITY (XXE), extensión .crt/.xml, 512 KB (`SeguridadTest`).
+- ✅ Recibidos limitados a JSON de 512 KB; scripts rechazados. Discos privados nunca servidos por HTTP (`serve` = false).
 
 ## V13 API
 - ✅ Límite por token (120/min), 401/403 en español, OpenAPI documentada.
+- ✅ CORS cerrado por defecto (`CORS_ORIGENES`), sin credenciales cruzadas.
+- ✅ La bitácora atribuye las acciones de la API al token, nunca a una persona.
 
 ## V14 Configuración
-- ✅ Cabeceras de seguridad y CSP con nonce (`EndurecimientoTest`). 🟡 CSP aún requiere `'unsafe-eval'` por Alpine.
+- ✅ Cabeceras de seguridad y CSP estricta con nonce para scripts y estilos, sin `'unsafe-eval'` ni `'unsafe-inline'` (Livewire en modo `csp_safe`) (`EndurecimientoTest`, ZAP).
 - ✅ `plataforma:revisar-produccion` verifica la configuración crítica.
 - ⏳ WAF delante de la aplicación (servicio del hosting).
+
+## Pruebas realizadas (25/11/2026)
+
+| Prueba | Resultado |
+| --- | --- |
+| Suite automatizada `tests/Feature/Seguridad` (XSS, SQLi, IDOR, CSRF, manipulación de Livewire, subidas, XXE, enlaces firmados, sesión, open redirect, asignación masiva, recorrido de directorios, roles, RLS, secretos en log) | 18 pruebas, todas pasan; también corre en el CI |
+| OWASP ZAP *baseline* (pasivo, sin sesión) | 0 fallas; avisos menores resueltos (versión de PHP, CSP, cookie sin HttpOnly) |
+| OWASP ZAP *full scan* (activo, con sesión iniciada, todas las pantallas internas con parámetros) | 0 fallas en 111 reglas (inyección SQL, XSS reflejado y almacenado, recorrido de directorios, inyección de comandos, CRLF, entre otras) |
+| Hallazgos corregidos | Precio de la Caja manipulable desde el navegador; certificado sin validar (XXE); CSP con `unsafe-eval`; cookie `XSRF-TOKEN` sin HttpOnly; CORS abierto en la API; bitácora que atribuía acciones de la API a un usuario por coincidencia de id; disco privado servible por HTTP |
+| Pendiente (hosting) | WAF, TLS, KMS, pruebas de penetración externas sobre staging |

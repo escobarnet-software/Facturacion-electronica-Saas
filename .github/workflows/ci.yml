@@ -140,6 +140,17 @@ jobs:
         run: |
           docker compose -f docker-compose.demo.yml exec -T web php artisan dte:pruebas-minimas 06141507261015 --tipos=01,03,05,invalidacion,contingencia
           curl -fsS http://127.0.0.1:8899/simulador/estado | grep -q "en línea"
+      - name: Escaneo de seguridad OWASP ZAP (pasivo) contra la demo
+        run: |
+          mkdir -p zap && chmod 777 zap
+          docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://127.0.0.1:8000 -m 2 -r zap.html -I
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-zap
+          path: zap/zap.html
+          if-no-files-found: ignore
       - name: Registros si falla
         if: failure()
         run: docker compose -f docker-compose.demo.yml logs --tail=80

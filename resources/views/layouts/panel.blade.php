@@ -44,7 +44,7 @@
 @endphp
 <div x-data="{ abierto: false }" class="min-h-full">
     {{-- Fondo oscuro del menú en celular --}}
-    <div x-show="abierto" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/50 lg:hidden" x-on:click="abierto = false" style="display: none"></div>
+    <div x-show="abierto" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/50 lg:hidden" x-on:click="abierto = false" x-cloak></div>
 
     {{-- Menú lateral --}}
     <aside class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-gradient-to-b from-marca-900 via-marca-800 to-marca-900 transition-transform lg:translate-x-0"

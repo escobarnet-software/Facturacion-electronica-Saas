@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Documento Tributario Electrónico de una empresa.
@@ -105,7 +104,7 @@ class Dte extends Model
             'de' => $de->value,
             'a' => $a->value,
             'motivo' => $motivo,
-            'usuario_id' => Auth::id(),
+            'usuario_id' => Bitacora::usuarioId(),
             'payload' => $payload,
             'respuesta' => $respuesta,
         ]);
