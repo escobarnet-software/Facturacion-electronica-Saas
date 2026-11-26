@@ -1,21 +1,20 @@
 <div class="space-y-4">
-    <h1 >Establecimientos y puntos de venta</h1>
+    <h1>Sucursales y cajas</h1>
     <p class="-mt-2 text-sm text-slate-500">Casa matriz, sucursales y cajas, con los códigos que les asignó Hacienda.</p>
     <div class="grid gap-4 sm:grid-cols-2">
         <form wire:submit="crearEstablecimiento" class="space-y-2 card">
             <h2 class="font-semibold">Nuevo establecimiento</h2>
             <label class="block">Tipo<select wire:model="establecimiento.tipo" class="mt-1 w-full "><option value="02">Casa matriz</option><option value="01">Sucursal</option><option value="04">Bodega</option><option value="07">Predio o patio</option><option value="20">Otro</option></select></label>
-            <label class="block">Nombre<input wire:model="establecimiento.nombre" class="mt-1 w-full "></label>
-            <label class="block">Código de Hacienda<input wire:model="establecimiento.cod_estable_mh" class="mt-1 w-full " placeholder="M001"></label>
-            @error('establecimiento.*')<p class="text-sm text-red-700">{{ $message }}</p>@enderror
+            <x-campo etiqueta="Nombre" campo="establecimiento.nombre" requerido><input wire:model="establecimiento.nombre" maxlength="150"></x-campo>
+            <x-campo etiqueta="Código de Hacienda" campo="establecimiento.cod_estable_mh" requerido ayuda="M (casa matriz), S (sucursal), B (bodega) o P (patio) + 3 dígitos. Ej.: M001."><input wire:model="establecimiento.cod_estable_mh" maxlength="4" placeholder="M001" class="uppercase"></x-campo>
             <button class="btn-primario">Agregar</button>
         </form>
         <form wire:submit="crearPuntoVenta" class="space-y-2 card">
             <h2 class="font-semibold">Nuevo punto de venta</h2>
             <label class="block">Establecimiento<select wire:model="puntoVenta.establecimiento_id" class="mt-1 w-full "><option value="">Elija…</option>@foreach ($establecimientos as $e)<option value="{{ $e->id }}">{{ $e->cod_estable_mh }} · {{ $e->nombre }}</option>@endforeach</select></label>
-            <label class="block">Nombre<input wire:model="puntoVenta.nombre" class="mt-1 w-full "></label>
-            <label class="block">Código de Hacienda<input wire:model="puntoVenta.cod_punto_venta_mh" class="mt-1 w-full " placeholder="P001"></label>
-            @error('puntoVenta.*')<p class="text-sm text-red-700">{{ $message }}</p>@enderror
+            @error('puntoVenta.establecimiento_id')<p class="text-xs font-medium text-rose-700">{{ $message }}</p>@enderror
+            <x-campo etiqueta="Nombre" campo="puntoVenta.nombre" requerido><input wire:model="puntoVenta.nombre" maxlength="150" placeholder="Caja 1"></x-campo>
+            <x-campo etiqueta="Código de Hacienda" campo="puntoVenta.cod_punto_venta_mh" requerido ayuda="P + 3 dígitos. Ej.: P001."><input wire:model="puntoVenta.cod_punto_venta_mh" maxlength="4" placeholder="P001" class="uppercase"></x-campo>
             <button class="btn-primario">Agregar</button>
         </form>
     </div>

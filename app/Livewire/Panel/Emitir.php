@@ -6,6 +6,7 @@ use App\Dte\Emision\EmisionDte;
 use App\Dte\Emision\LineaSolicitud;
 use App\Dte\Excepciones\DteException;
 use App\Dte\Modelos\Pago;
+use App\Dte\Validacion\ReglasHacienda as R;
 use App\Models\Cliente;
 use App\Models\Dte;
 use App\Models\Empresa;
@@ -13,6 +14,7 @@ use App\Models\Establecimiento;
 use App\Models\Producto;
 use App\Models\PuntoVenta;
 use App\Models\Usuario;
+use App\Support\Decimal;
 use App\Tenancy\Tenancy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
@@ -93,15 +95,10 @@ class Emitir extends Component
     {
         Gate::authorize('emitir');
         $this->error = $this->emitido = null;
-        $this->validate([
-            'tipo' => 'required|in:01,03',
-            'lineas' => 'required|array|min:1',
-            'lineas.*.descripcion' => 'required|string|max:1000',
-            'lineas.*.cantidad' => ['required', 'regex:/^\d+(\.\d{1,8})?$/'],
-            'lineas.*.precio' => ['required', 'regex:/^\d+(\.\d{1,8})?$/'],
-            'lineas.*.descuento' => ['nullable', 'regex:/^\d+(\.\d{1,8})?$/'],
-            'correo' => 'nullable|email',
-        ]);
+        $this->validate($this->reglas(), $this->mensajes(), $this->atributos());
+        if (! $this->descuentosValidos()) {
+            return;
+        }
 
         try {
             [$establecimiento, $puntoVenta] = $this->ubicacion();
@@ -119,6 +116,74 @@ class Emitir extends Component
         $this->lineas = [];
         $this->agregarLinea();
         $this->dispatch('dte-emitido', id: $dte->id);
+    }
+
+    /**
+     * Reglas del detalle según los esquemas oficiales: descripción de 1 a 1500 caracteres, cantidad
+     * mayor que cero, montos con hasta 8 decimales y menores que 100 000 000 000, máximo 2000 ítems,
+     * observaciones de hasta 3000 caracteres, correo de 6 a 100.
+     *
+     * @return array<string, mixed>
+     */
+    protected function reglas(): array
+    {
+        return [
+            'tipo' => 'required|in:01,03',
+            'lineas' => 'required|array|min:1|max:2000',
+            'lineas.*.descripcion' => R::texto('descripcion'),
+            'lineas.*.cantidad' => R::cantidad(),
+            'lineas.*.precio' => R::monto(),
+            'lineas.*.descuento' => R::monto(false),
+            'correo' => R::correo(false),
+            'observaciones' => R::texto('observaciones', false),
+        ];
+    }
+
+    /** @return array<string, string> */
+    protected function mensajes(): array
+    {
+        return [
+            ...R::mensajes(['lineas.*.cantidad' => 'cantidad', 'lineas.*.precio' => 'monto', 'lineas.*.descuento' => 'monto', 'correo' => 'correo']),
+            'lineas.required' => 'Agregue al menos un producto o servicio.',
+            'lineas.*.descripcion.required' => 'Escriba la descripción del producto o servicio.',
+            'lineas.max' => 'Hacienda admite hasta 2000 líneas por documento.',
+        ];
+    }
+
+    /** @return array<string, string> */
+    protected function atributos(): array
+    {
+        return ['lineas.*.descripcion' => 'descripción', 'lineas.*.cantidad' => 'cantidad', 'lineas.*.precio' => 'precio', 'lineas.*.descuento' => 'descuento', 'observaciones' => 'observaciones'];
+    }
+
+    /** Validación en vivo de cada campo del detalle. */
+    public function updated(string $propiedad): void
+    {
+        if (preg_match('/^lineas\.\d+\.(descripcion|cantidad|precio|descuento)$/', $propiedad) || in_array($propiedad, ['correo', 'observaciones'], true)) {
+            $regla = (string) preg_replace('/^lineas\.\d+\./', 'lineas.*.', $propiedad);
+            $this->validateOnly($propiedad, [$propiedad => $this->reglas()[$regla]], $this->mensajes() + [$propiedad.'.regex' => $this->mensajes()[$regla.'.regex'] ?? 'Formato inválido.'], $this->atributos());
+            if (str_ends_with($propiedad, 'descuento')) {
+                $this->descuentosValidos();
+            }
+        }
+    }
+
+    /** El descuento de una línea no puede ser mayor que su venta (cantidad × precio). */
+    private function descuentosValidos(): bool
+    {
+        foreach ($this->lineas as $i => $l) {
+            $d = (string) ($l['descuento'] ?? '0');
+            if ($d === '' || ! preg_match('/^\d{1,11}(\.\d{1,8})?$/', $d) || ! preg_match('/^\d{1,11}(\.\d{1,8})?$/', (string) ($l['cantidad'] ?? '')) || ! preg_match('/^\d{1,11}(\.\d{1,8})?$/', (string) ($l['precio'] ?? ''))) {
+                continue;
+            }
+            if (Decimal::of($d)->compareTo(Decimal::of((string) $l['cantidad'])->mul((string) $l['precio'])) > 0) {
+                $this->addError("lineas.{$i}.descuento", 'El descuento no puede ser mayor que la venta de la línea (cantidad × precio).');
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function render(): View

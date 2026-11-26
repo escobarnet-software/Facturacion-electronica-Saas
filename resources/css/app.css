@@ -65,6 +65,8 @@ main .overflow-x-auto::-webkit-scrollbar { height: 8px; }
 main .overflow-x-auto::-webkit-scrollbar-thumb { background: rgb(148 163 184 / 0.6); border-radius: 9999px; }
 
 @layer components {
+    .campo-error input:not([type=checkbox]), .campo-error select, .campo-error textarea { @apply border-rose-400 bg-rose-50/40 focus:border-rose-500 focus:ring-rose-100; }
+    .campo input:not([type=checkbox]), .campo select, .campo textarea { @apply w-full; }
     .card { @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm; }
     .card-titulo { @apply mb-4 flex items-center gap-2 text-base font-semibold text-tinta; }
 

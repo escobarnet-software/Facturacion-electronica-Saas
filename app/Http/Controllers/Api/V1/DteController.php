@@ -13,6 +13,7 @@ use App\Dte\Modelos\Pago;
 use App\Dte\Representacion\ArchivoDte;
 use App\Dte\Representacion\Entregador;
 use App\Dte\Representacion\RepresentacionGrafica;
+use App\Dte\Validacion\ReglasHacienda as R;
 use App\Models\Cliente;
 use App\Models\Dte;
 use App\Models\Empresa;
@@ -39,11 +40,17 @@ final class DteController
             if (! in_array($tipo, self::TIPOS_EMISION, true)) {
                 return response()->json(['message' => "La API emite por ahora Facturas (01) y Créditos Fiscales (03); el tipo {$tipo} aún no está disponible."], 422);
             }
+            if (is_array($cliente = $request->input('cliente'))) {
+                // Se aceptan NIT/NRC con guiones y DUI sin guion; se normalizan al formato de Hacienda.
+                $request->merge(['cliente' => [...$cliente,
+                    'num_documento' => R::documento(isset($cliente['tipo_documento']) ? (string) $cliente['tipo_documento'] : null, isset($cliente['num_documento']) ? (string) $cliente['num_documento'] : null),
+                    'nrc' => R::soloDigitos(isset($cliente['nrc']) ? (string) $cliente['nrc'] : null)]]);
+            }
             $datos = $request->validate([
                 'establecimiento' => ['nullable', 'string', 'size:4'],
                 'punto_venta' => ['nullable', 'string', 'size:4'],
                 'lineas' => ['required', 'array', 'min:1', 'max:2000'],
-                'lineas.*.descripcion' => ['required', 'string', 'max:1000'],
+                'lineas.*.descripcion' => R::texto('descripcion'),
                 'lineas.*.cantidad' => ['required'],
                 'lineas.*.precio' => ['required'],
                 'lineas.*.descuento' => ['nullable'],
@@ -52,15 +59,20 @@ final class DteController
                 'lineas.*.uni_medida' => ['nullable', 'integer'],
                 'lineas.*.codigo' => ['nullable', 'string', 'max:25'],
                 'cliente' => ['nullable', 'array'],
-                'cliente.tipo_documento' => ['required_with:cliente', 'string', 'max:2'],
-                'cliente.num_documento' => ['required_with:cliente', 'string', 'max:20'],
-                'cliente.nombre' => ['required_with:cliente', 'string', 'max:250'],
-                'cliente.nrc' => ['nullable', 'string', 'max:8'],
-                'cliente.cod_actividad' => ['nullable', 'string', 'max:6'],
-                'cliente.desc_actividad' => ['nullable', 'string', 'max:150'],
+                // Mismas reglas de Hacienda que el panel (esquemas y catálogos oficiales).
+                'cliente.tipo_documento' => ['required_with:cliente', ...array_slice(R::tipoDocumento(), 1)],
+                'cliente.num_documento' => ['required_with:cliente', ...array_slice(R::numeroDocumento($request->input('cliente.tipo_documento')), 1)],
+                'cliente.nombre' => ['required_with:cliente', ...array_slice(R::texto('nombre'), 1)],
+                'cliente.nrc' => R::nrc(false),
+                'cliente.cod_actividad' => R::actividad(false),
+                'cliente.desc_actividad' => R::texto('desc_actividad', false),
                 'cliente.direccion' => ['nullable', 'array'],
-                'cliente.telefono' => ['nullable', 'string', 'max:30'],
-                'cliente.correo' => ['nullable', 'email', 'max:100'],
+                'cliente.direccion.departamento' => R::departamento(false),
+                'cliente.direccion.municipio' => R::municipio($request->input('cliente.direccion.departamento'), false),
+                'cliente.direccion.distrito' => R::distrito($request->input('cliente.direccion.departamento'), false),
+                'cliente.direccion.complemento' => R::texto('complemento', false),
+                'cliente.telefono' => R::telefono(false),
+                'cliente.correo' => R::correo(false),
                 'pagos' => ['nullable', 'array'],
                 'pagos.*.codigo' => ['required', 'string', 'size:2'],
                 'pagos.*.monto' => ['nullable'],
@@ -68,14 +80,16 @@ final class DteController
                 'pagos.*.plazo' => ['nullable', 'string', 'size:2'],
                 'pagos.*.periodo' => ['nullable', 'integer'],
                 'condicion_operacion' => ['nullable', 'integer', 'in:1,2,3'],
-                'observaciones' => ['nullable', 'string', 'max:3000'],
-                'correo' => ['nullable', 'email', 'max:100'],
+                'observaciones' => R::texto('observaciones', false),
+                'correo' => R::correo(false),
                 'calcular' => ['nullable', 'boolean'],
                 'totales' => ['required_if:calcular,false', 'array'],
                 'totales.total_pagar' => ['nullable'],
                 'totales.total_gravada' => ['nullable'],
                 'totales.total_iva' => ['nullable'],
-            ]);
+            ], R::mensajes(['cliente.num_documento' => 'documento', 'cliente.nrc' => 'nrc', 'cliente.cod_actividad' => 'actividad', 'cliente.correo' => 'correo',
+                'cliente.telefono' => 'telefono', 'cliente.direccion.departamento' => 'departamento', 'cliente.direccion.municipio' => 'municipio',
+                'cliente.direccion.distrito' => 'distrito', 'cliente.tipo_documento' => 'tipoDocumento', 'correo' => 'correo']));
 
             $empresa = $this->empresa($request);
             [$establecimiento, $puntoVenta] = $this->puntoDeVenta($datos['establecimiento'] ?? null, $datos['punto_venta'] ?? null);

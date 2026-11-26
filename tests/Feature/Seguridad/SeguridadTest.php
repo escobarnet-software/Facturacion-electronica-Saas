@@ -103,7 +103,7 @@ it('IDOR: no se pueden ver ni descargar ni invalidar documentos de otra empresa 
     $this->get(route('panel.documentos.json', $ajeno->id))->assertNotFound();
 
     tenancy()->establecer($this->a['empresa']->id);
-    Livewire::test(Invalidaciones::class)->set('dteId', $ajeno->id)->set('nombreSolicita', 'X')->set('numDocSolicita', '012345678')->call('invalidar')
+    Livewire::test(Invalidaciones::class)->set('dteId', $ajeno->id)->set('nombreSolicita', 'Cliente Solicitante')->set('numDocSolicita', '012345678')->call('invalidar')
         ->assertStatus(404);
     tenancy()->ejecutarComo($this->b['empresa']->id, fn () => expect($ajeno->fresh()->estado->value)->toBe('transmitido'));
 });

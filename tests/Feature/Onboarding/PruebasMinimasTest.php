@@ -146,7 +146,7 @@ it('el asistente guarda los datos de la empresa', function () {
         ->assertSee('Datos de la empresa guardados');
 
     expect($this->empresa->fresh()->razon_social)->toBe('PUPUSERÍA NUEVA, S.A. DE C.V.')
-        ->and($this->empresa->fresh()->responsable_num_doc)->toBe('098765432');
+        ->and($this->empresa->fresh()->responsable_num_doc)->toBe('09876543-2'); // DUI con el formato 00000000-0
 });
 
 it('el asistente carga credenciales cifradas y el certificado, y nunca los muestra de vuelta', function () {

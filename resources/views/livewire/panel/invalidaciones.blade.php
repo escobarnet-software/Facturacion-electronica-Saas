@@ -16,13 +16,13 @@
                 </select>
             </label>
             @if ($tipoAnulacion !== 2)
-                <label class="block">Código de generación del documento que reemplaza<input wire:model="codigoReemplazo" class="mt-1 w-full font-mono"></label>
+                <x-campo etiqueta="Código de generación del documento que reemplaza" campo="codigoReemplazo" requerido ayuda="36 caracteres; el documento nuevo ya debe estar sellado."><input wire:model="codigoReemplazo" maxlength="36" class="font-mono uppercase"></x-campo>
             @endif
-            <label class="block">Motivo<input wire:model="motivo" class="mt-1 w-full "></label>
+            <x-campo etiqueta="Motivo" campo="motivo" :requerido="$tipoAnulacion === 3" ayuda="Hasta 200 caracteres."><input wire:model="motivo" maxlength="200"></x-campo>
             <div class="grid gap-2 sm:grid-cols-3">
-                <label class="block">Nombre de quien solicita<input wire:model="nombreSolicita" class="mt-1 w-full "></label>
-                <label class="block">Tipo de documento<select wire:model="tipDocSolicita" class="mt-1 w-full "><option value="13">DUI</option><option value="36">NIT</option><option value="03">Pasaporte</option><option value="02">Carnet de residente</option><option value="37">Otro</option></select></label>
-                <label class="block">Número de documento<input wire:model="numDocSolicita" class="mt-1 w-full "></label>
+                <x-campo etiqueta="Nombre de quien solicita" campo="nombreSolicita" requerido ayuda="Hasta 100 caracteres."><input wire:model="nombreSolicita" maxlength="100"></x-campo>
+                <label class="block">Tipo de documento<select wire:model.live="tipDocSolicita" class="mt-1 w-full"><option value="13">DUI</option><option value="36">NIT</option><option value="03">Pasaporte</option><option value="02">Carnet de residente</option><option value="37">Otro</option></select></label>
+                <x-campo etiqueta="Número de documento" campo="numDocSolicita" requerido :ayuda="$tipDocSolicita === '13' ? 'DUI: 9 dígitos; se guarda como 00000000-0.' : ($tipDocSolicita === '36' ? 'NIT: 9 o 14 dígitos, sin guiones.' : 'Hasta 20 caracteres.')"><input wire:model="numDocSolicita" maxlength="20"></x-campo>
             </div>
             <button wire:click="invalidar" wire:loading.attr="disabled" class="rounded bg-red-700 px-4 py-2 text-white">Invalidar</button>
         </div>

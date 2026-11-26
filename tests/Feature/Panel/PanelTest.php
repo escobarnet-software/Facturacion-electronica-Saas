@@ -235,6 +235,7 @@ it('administra productos, clientes, establecimientos y puntos de venta', functio
 
     Livewire::test(Clientes::class)
         ->set('form.num_documento', '06140101851014')->set('form.nombre', 'Cliente Nuevo')->set('form.nrc', '12345')
+        ->set('form.cod_actividad', '46900')->assertSet('form.desc_actividad', fn ($d) => is_string($d) && $d !== '') // se completa del CAT-019
         ->set('form.departamento', '06')->set('form.municipio', '23')->set('form.distrito', '14')->set('form.complemento', 'San Salvador')
         ->call('guardar')->assertHasNoErrors()
         ->assertSee('••••••••••1014');

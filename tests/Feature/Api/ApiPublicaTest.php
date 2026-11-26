@@ -4,7 +4,6 @@ use App\Enums\Rol;
 use App\Jobs\EnviarWebhook;
 use App\Livewire\Panel\ApiWebhooks;
 use App\Models\Bitacora;
-use App\Models\CatValor;
 use App\Models\Contingencia;
 use App\Models\Dte;
 use App\Models\Empresa;
@@ -197,7 +196,7 @@ it('invalida por la API y dispara el webhook dte.invalidado', function () {
 });
 
 it('consulta catálogos oficiales', function () {
-    CatValor::query()->create(['catalogo' => 'CAT-012', 'codigo' => '06', 'valor' => 'San Salvador', 'padre' => '', 'vigente' => true, 'version' => '2']);
+    // Catálogos oficiales sembrados en la base de pruebas (Tests\TestCase::$seed).
     api('GET', '/catalogos/012', tokenDe($this->d['empresa'], ['catalogos:leer']))->assertOk()
         ->assertJsonPath('catalogo', 'CAT-012')
         ->assertJsonFragment(['codigo' => '06']);

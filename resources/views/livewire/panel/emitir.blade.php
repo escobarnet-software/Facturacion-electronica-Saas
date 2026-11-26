@@ -29,9 +29,9 @@
                             @foreach ($puntosVenta as $pv)<option value="{{ $pv->id }}">{{ $pv->establecimiento->cod_estable_mh }}{{ $pv->cod_punto_venta_mh }} · {{ $pv->nombre }}</option>@endforeach
                         </select>
                     </label>
-                    <label class="block">Correo para enviar el documento
-                        <input type="email" wire:model="correo" class="mt-1 w-full" placeholder="cliente@correo.com (opcional)">
-                    </label>
+                    <x-campo etiqueta="Correo para enviar el documento" campo="correo" ayuda="Opcional. Se le envía el PDF y el JSON.">
+                        <input type="email" wire:model.blur="correo" maxlength="100" placeholder="cliente@correo.com">
+                    </x-campo>
                 </div>
                 @if ($tipo === '03')
                     <p class="mt-3 text-xs text-slate-500">El Crédito Fiscal exige un cliente con NRC, actividad económica y dirección. Si no aparece, créelo en <a class="underline" href="{{ route('panel.clientes') }}">Clientes</a>.</p>
@@ -55,11 +55,11 @@
                         <tbody>
                         @forelse ($lineas as $i => $l)
                             <tr wire:key="linea-{{ $i }}">
-                                <td><input wire:model.live.debounce.400ms="lineas.{{ $i }}.descripcion" class="w-full min-w-48" aria-label="Descripción"></td>
-                                <td><input wire:model.live.debounce.400ms="lineas.{{ $i }}.cantidad" class="w-24" inputmode="decimal" aria-label="Cantidad"></td>
-                                <td><input wire:model.live.debounce.400ms="lineas.{{ $i }}.precio" class="w-32" inputmode="decimal" aria-label="Precio sin IVA"></td>
+                                <td><div @class(["campo", "campo-error" => $errors->has("lineas.$i.descripcion")])><input wire:model.live.debounce.400ms="lineas.{{ $i }}.descripcion" class="w-full min-w-48" maxlength="1500" aria-label="Descripción">@error("lineas.$i.descripcion")<p class="mt-1 max-w-48 text-xs font-medium text-rose-700" role="alert">{{ $message }}</p>@enderror</div></td>
+                                <td><div @class(["campo", "campo-error" => $errors->has("lineas.$i.cantidad")])><input wire:model.live.debounce.400ms="lineas.{{ $i }}.cantidad" class="w-24" maxlength="20" inputmode="decimal" aria-label="Cantidad">@error("lineas.$i.cantidad")<p class="mt-1 max-w-48 text-xs font-medium text-rose-700" role="alert">{{ $message }}</p>@enderror</div></td>
+                                <td><div @class(["campo", "campo-error" => $errors->has("lineas.$i.precio")])><input wire:model.live.debounce.400ms="lineas.{{ $i }}.precio" class="w-32" maxlength="20" inputmode="decimal" aria-label="Precio sin IVA">@error("lineas.$i.precio")<p class="mt-1 max-w-48 text-xs font-medium text-rose-700" role="alert">{{ $message }}</p>@enderror</div></td>
                                 @if ($tipo === '03')
-                                    <td><input wire:model.live.debounce.400ms="lineas.{{ $i }}.descuento" class="w-24" inputmode="decimal" aria-label="Descuento"></td>
+                                    <td><div @class(["campo", "campo-error" => $errors->has("lineas.$i.descuento")])><input wire:model.live.debounce.400ms="lineas.{{ $i }}.descuento" class="w-24" maxlength="20" inputmode="decimal" aria-label="Descuento">@error("lineas.$i.descuento")<p class="mt-1 max-w-48 text-xs font-medium text-rose-700" role="alert">{{ $message }}</p>@enderror</div></td>
                                     <td><select wire:model.live="lineas.{{ $i }}.tipoVenta" aria-label="Tipo de venta"><option value="gravada">Gravada</option><option value="exenta">Exenta</option><option value="no_sujeta">No sujeta</option></select></td>
                                 @endif
                                 <td><button type="button" wire:click="quitarLinea({{ $i }})" class="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50" aria-label="Quitar línea"><x-icono nombre="quitar" clase="size-4"/></button></td>
@@ -70,7 +70,8 @@
                         </tbody>
                     </table>
                 </div>
-                @error('lineas.*')<p class="mt-2 text-sm text-rose-700">{{ $message }}</p>@enderror
+                @error('lineas')<p class="mt-2 text-sm font-medium text-rose-700" role="alert">{{ $message }}</p>@enderror
+                <p class="mt-3 text-xs text-slate-500">Hacienda pide: descripción de 1 a 1500 caracteres, cantidad mayor que cero y montos con hasta 8 decimales (sin comas ni signo de dólar).</p>
             </section>
 
             <section class="card">
@@ -82,9 +83,9 @@
                     <label class="block">Forma de pago
                         <select wire:model="formaPago" class="mt-1 w-full"><option value="01">Billetes y monedas</option><option value="02">Tarjeta débito</option><option value="03">Tarjeta crédito</option><option value="05">Transferencia</option></select>
                     </label>
-                    <label class="block sm:col-span-2">Observaciones
-                        <textarea wire:model="observaciones" class="mt-1 w-full" rows="2" placeholder="Opcional: aparece en el documento"></textarea>
-                    </label>
+                    <x-campo etiqueta="Observaciones" campo="observaciones" class="sm:col-span-2" ayuda="Opcional, hasta 3000 caracteres. Aparece en el documento.">
+                        <textarea wire:model.blur="observaciones" rows="2" maxlength="3000"></textarea>
+                    </x-campo>
                 </div>
             </section>
         </div>

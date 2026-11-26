@@ -7,6 +7,13 @@ use Illuminate\Support\Facades\Http;
 
 abstract class TestCase extends BaseTestCase
 {
+    /**
+     * La base de pruebas se crea con los catálogos oficiales de Hacienda (docs/oficial/Catalogos.xlsx):
+     * las validaciones de los formularios los consultan (actividades, departamentos, municipios…).
+     * Con RefreshDatabase se siembran una sola vez por ejecución.
+     */
+    protected bool $seed = true;
+
     protected function setUp(): void
     {
         parent::setUp();

@@ -4,6 +4,7 @@ namespace App\Livewire\Panel;
 
 use App\Dte\Credenciales\AlmacenCertificados;
 use App\Dte\Pruebas\EjecutorPruebasMinimas;
+use App\Dte\Validacion\ReglasHacienda as R;
 use App\Jobs\EjecutarPruebasMinimas;
 use App\Models\Bitacora;
 use App\Models\Empresa;
@@ -63,25 +64,84 @@ class Onboarding extends Component
         ];
     }
 
+    /**
+     * Datos del EMISOR según los esquemas oficiales (sección «emisor»: todos obligatorios salvo el
+     * nombre comercial) y los catálogos de Hacienda.
+     *
+     * @return array<string, mixed>
+     */
+    protected function reglasEmpresa(): array
+    {
+        $dep = $this->empresa['departamento'] ?? null;
+
+        return [
+            'empresa.nrc' => R::nrc(),
+            'empresa.razon_social' => R::texto('nombre'),
+            'empresa.nombre_comercial' => R::texto('nombre_comercial', false),
+            'empresa.cod_actividad' => R::actividad(),
+            'empresa.desc_actividad' => R::texto('desc_actividad'),
+            'empresa.telefono' => R::telefono(),
+            'empresa.correo' => R::correo(),
+            'empresa.departamento' => R::departamento(),
+            'empresa.municipio' => R::municipio($dep),
+            'empresa.distrito' => R::distrito($dep),
+            'empresa.complemento' => R::texto('complemento'),
+            'empresa.responsable_nombre' => ['required', 'string', 'min:3', 'max:100'],
+            'empresa.responsable_tipo_doc' => R::tipoDocumento(),
+            'empresa.responsable_num_doc' => R::numeroDocumento($this->empresa['responsable_tipo_doc'] ?? null),
+            'empresa.tipo_contribuyente' => 'required|in:grande,mediano,otro',
+            'empresa.agente_retencion' => 'boolean', 'empresa.agente_percepcion' => 'boolean',
+        ];
+    }
+
+    /** @return array<string, string> */
+    protected function mensajesEmpresa(): array
+    {
+        return R::mensajes(['empresa.nrc' => 'nrc', 'empresa.cod_actividad' => 'actividad', 'empresa.telefono' => 'telefono', 'empresa.correo' => 'correo',
+            'empresa.departamento' => 'departamento', 'empresa.municipio' => 'municipio', 'empresa.distrito' => 'distrito',
+            'empresa.responsable_num_doc' => 'documento', 'empresa.responsable_tipo_doc' => 'tipoDocumento']);
+    }
+
+    /** @return array<string, string> */
+    protected function atributosEmpresa(): array
+    {
+        return ['empresa.razon_social' => 'razón social', 'empresa.nombre_comercial' => 'nombre comercial', 'empresa.cod_actividad' => 'actividad económica',
+            'empresa.desc_actividad' => 'descripción de la actividad', 'empresa.telefono' => 'teléfono', 'empresa.correo' => 'correo', 'empresa.complemento' => 'dirección',
+            'empresa.responsable_nombre' => 'nombre del responsable', 'empresa.responsable_num_doc' => 'documento del responsable'];
+    }
+
+    /** Validación en vivo de los datos de la empresa. */
+    public function updated(string $propiedad): void
+    {
+        if (! str_starts_with($propiedad, 'empresa.')) {
+            return;
+        }
+        $this->normalizarEmpresa();
+        if ($propiedad === 'empresa.departamento') {
+            $this->empresa['municipio'] = $this->empresa['distrito'] = null;
+        }
+        if ($propiedad === 'empresa.cod_actividad') {
+            $this->empresa['desc_actividad'] = R::nombreActividad($this->empresa['cod_actividad'] ?? null) ?? $this->empresa['desc_actividad'];
+        }
+        $this->validateOnly($propiedad, $this->reglasEmpresa(), $this->mensajesEmpresa(), $this->atributosEmpresa());
+    }
+
+    private function normalizarEmpresa(): void
+    {
+        $this->empresa['nrc'] = R::soloDigitos($this->empresa['nrc'] ?? null);
+        $this->empresa['responsable_num_doc'] = R::documento($this->empresa['responsable_tipo_doc'] ?? null, $this->empresa['responsable_num_doc'] ?? null);
+        foreach (['razon_social', 'nombre_comercial', 'desc_actividad', 'telefono', 'correo', 'complemento', 'responsable_nombre'] as $k) {
+            if (is_string($this->empresa[$k] ?? null)) {
+                $this->empresa[$k] = trim($this->empresa[$k]) === '' ? null : trim($this->empresa[$k]);
+            }
+        }
+    }
+
     public function guardarEmpresa(): void
     {
         Gate::authorize('administrar-empresa');
-        $d = $this->validate([
-            'empresa.nrc' => 'required|regex:/^\d{2,8}$/',
-            'empresa.razon_social' => 'required|string|max:250',
-            'empresa.nombre_comercial' => 'nullable|string|max:150',
-            'empresa.cod_actividad' => 'required|string|min:5|max:6',
-            'empresa.desc_actividad' => 'required|string|min:5|max:150',
-            'empresa.telefono' => 'required|string|min:8|max:30',
-            'empresa.correo' => 'required|email|max:100',
-            'empresa.departamento' => 'required|size:2', 'empresa.municipio' => 'required|size:2', 'empresa.distrito' => 'required|size:2',
-            'empresa.complemento' => 'required|string|max:200',
-            'empresa.responsable_nombre' => 'required|string|max:100',
-            'empresa.responsable_tipo_doc' => 'required|in:13,36,03,02,37',
-            'empresa.responsable_num_doc' => 'required|string|max:25',
-            'empresa.tipo_contribuyente' => 'required|in:grande,mediano,otro',
-            'empresa.agente_retencion' => 'boolean', 'empresa.agente_percepcion' => 'boolean',
-        ])['empresa'];
+        $this->normalizarEmpresa();
+        $d = $this->validate($this->reglasEmpresa(), $this->mensajesEmpresa(), $this->atributosEmpresa())['empresa'];
 
         $e = $this->modelo();
         $e->fill([
@@ -161,6 +221,11 @@ class Onboarding extends Component
             'tienePuntoVenta' => PuntoVenta::query()->exists(),
             'pruebas' => PruebaMinima::query()->orderBy('id')->get(),
             'tiposDisponibles' => EjecutorPruebasMinimas::requeridas(),
+            'tiposDocumento' => R::opciones('CAT-022'),
+            'departamentos' => R::opciones('CAT-012'),
+            'municipios' => ($dep = $this->empresa['departamento'] ?? null) ? R::opciones('CAT-013', $dep) : [],
+            'distritos' => $dep ? R::opciones('CAT-008', $dep) : [],
+            'actividades' => R::opciones('CAT-019'),
         ]);
     }
 

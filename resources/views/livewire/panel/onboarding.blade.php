@@ -8,26 +8,62 @@
 
     <section class="card">
         <div class="card-titulo"><span class="paso">1</span>Datos de la empresa</div>
-        <form wire:submit="guardarEmpresa" class="grid gap-2 sm:grid-cols-3">
-            <label>NRC<input wire:model="empresa.nrc" class="mt-1 w-full"></label>
-            <label>Razón social<input wire:model="empresa.razon_social" class="mt-1 w-full"></label>
-            <label>Nombre comercial<input wire:model="empresa.nombre_comercial" class="mt-1 w-full"></label>
-            <label>Código de actividad (CAT-019)<input wire:model="empresa.cod_actividad" class="mt-1 w-full"></label>
-            <label class="sm:col-span-2">Actividad económica<input wire:model="empresa.desc_actividad" class="mt-1 w-full"></label>
-            <label>Teléfono<input wire:model="empresa.telefono" class="mt-1 w-full"></label>
-            <label>Correo<input wire:model="empresa.correo" class="mt-1 w-full"></label>
-            <label>Tipo de contribuyente<select wire:model="empresa.tipo_contribuyente" class="mt-1 w-full"><option value="grande">Grande</option><option value="mediano">Mediano</option><option value="otro">Otro</option></select></label>
-            <label>Departamento<input wire:model="empresa.departamento" class="mt-1 w-full"></label>
-            <label>Municipio<input wire:model="empresa.municipio" class="mt-1 w-full"></label>
-            <label>Distrito<input wire:model="empresa.distrito" class="mt-1 w-full"></label>
-            <label class="sm:col-span-3">Dirección<input wire:model="empresa.complemento" class="mt-1 w-full"></label>
-            <label>Responsable ante Hacienda<input wire:model="empresa.responsable_nombre" class="mt-1 w-full"></label>
-            <label>Tipo de documento<select wire:model="empresa.responsable_tipo_doc" class="mt-1 w-full"><option value="13">DUI</option><option value="36">NIT</option><option value="03">Pasaporte</option></select></label>
-            <label>Número de documento<input wire:model="empresa.responsable_num_doc" class="mt-1 w-full"></label>
-            <label class="flex items-center gap-2"><input type="checkbox" wire:model="empresa.agente_retencion"> Agente de retención</label>
-            <label class="flex items-center gap-2"><input type="checkbox" wire:model="empresa.agente_percepcion"> Agente de percepción</label>
-            @if ($errors->hasAny(array_map(fn ($k) => 'empresa.'.$k, array_keys($empresa))))<p class="text-sm text-red-700 sm:col-span-3">{{ $errors->first() }}</p>@endif
-            <button class="btn-primario sm:col-span-3">Guardar datos</button>
+        <form wire:submit="guardarEmpresa" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" novalidate>
+            <x-campo etiqueta="NIT" campo="empresa.nit" ayuda="Lo registra Escobar Net al dar de alta la empresa.">
+                <input value="{{ $modelo->nit }}" disabled class="bg-slate-50">
+            </x-campo>
+            <x-campo etiqueta="NRC" campo="empresa.nrc" requerido ayuda="2 a 8 dígitos, sin guiones.">
+                <input wire:model.blur="empresa.nrc" maxlength="10" inputmode="numeric">
+            </x-campo>
+            <x-campo etiqueta="Tipo de contribuyente" campo="empresa.tipo_contribuyente" requerido>
+                <select wire:model="empresa.tipo_contribuyente"><option value="grande">Grande</option><option value="mediano">Mediano</option><option value="otro">Otro</option></select>
+            </x-campo>
+            <x-campo etiqueta="Razón social" campo="empresa.razon_social" requerido class="sm:col-span-2" ayuda="Como aparece en su NIT. Máximo 250 caracteres.">
+                <input wire:model.blur="empresa.razon_social" maxlength="250">
+            </x-campo>
+            <x-campo etiqueta="Nombre comercial" campo="empresa.nombre_comercial" ayuda="Opcional, máximo 150 caracteres.">
+                <input wire:model.blur="empresa.nombre_comercial" maxlength="150">
+            </x-campo>
+            <x-campo etiqueta="Actividad económica (catálogo de Hacienda)" campo="empresa.cod_actividad" requerido class="sm:col-span-2" ayuda="Escriba el código o parte del nombre y elija de la lista (CAT-019).">
+                <input wire:model.blur="empresa.cod_actividad" list="actividades-empresa" maxlength="6" autocomplete="off">
+                <datalist id="actividades-empresa">@foreach ($actividades as $c => $n)<option value="{{ $c }}">{{ $c }} · {{ $n }}</option>@endforeach</datalist>
+            </x-campo>
+            <x-campo etiqueta="Descripción de la actividad" campo="empresa.desc_actividad" requerido ayuda="Se completa sola al elegir la actividad.">
+                <input wire:model.blur="empresa.desc_actividad" maxlength="150">
+            </x-campo>
+            <x-campo etiqueta="Teléfono" campo="empresa.telefono" requerido ayuda="De 8 a 30 caracteres.">
+                <input type="tel" wire:model.blur="empresa.telefono" maxlength="30">
+            </x-campo>
+            <x-campo etiqueta="Correo" campo="empresa.correo" requerido ayuda="Aparece en sus documentos. Máximo 100 caracteres.">
+                <input type="email" wire:model.blur="empresa.correo" maxlength="100">
+            </x-campo>
+            <div class="hidden lg:block"></div>
+            <x-campo etiqueta="Departamento" campo="empresa.departamento" requerido>
+                <select wire:model.live="empresa.departamento"><option value="">Elija…</option>@foreach ($departamentos as $c => $n)<option value="{{ $c }}">{{ $n }}</option>@endforeach</select>
+            </x-campo>
+            <x-campo etiqueta="Municipio" campo="empresa.municipio" requerido>
+                <select wire:model.live="empresa.municipio" @disabled($municipios === [])><option value="">{{ $municipios === [] ? 'Primero elija el departamento' : 'Elija…' }}</option>@foreach ($municipios as $c => $n)<option value="{{ $c }}">{{ $n }}</option>@endforeach</select>
+            </x-campo>
+            <x-campo etiqueta="Distrito" campo="empresa.distrito" requerido>
+                <select wire:model.live="empresa.distrito" @disabled($distritos === [])><option value="">{{ $distritos === [] ? 'Primero elija el departamento' : 'Elija…' }}</option>@foreach ($distritos as $c => $n)<option value="{{ $c }}">{{ $n }}</option>@endforeach</select>
+            </x-campo>
+            <x-campo etiqueta="Dirección (complemento)" campo="empresa.complemento" requerido class="sm:col-span-2 lg:col-span-3" ayuda="Colonia, calle, número. Máximo 200 caracteres.">
+                <input wire:model.blur="empresa.complemento" maxlength="200">
+            </x-campo>
+            <x-campo etiqueta="Responsable ante Hacienda" campo="empresa.responsable_nombre" requerido ayuda="Quien firma las invalidaciones.">
+                <input wire:model.blur="empresa.responsable_nombre" maxlength="100">
+            </x-campo>
+            <x-campo etiqueta="Tipo de documento del responsable" campo="empresa.responsable_tipo_doc" requerido>
+                <select wire:model.live="empresa.responsable_tipo_doc">@foreach ($tiposDocumento as $c => $n)<option value="{{ $c }}">{{ $n }}</option>@endforeach</select>
+            </x-campo>
+            <x-campo etiqueta="Número de documento del responsable" campo="empresa.responsable_num_doc" requerido :ayuda="($empresa['responsable_tipo_doc'] ?? '') === '13' ? 'DUI: 9 dígitos; se guarda como 00000000-0.' : (($empresa['responsable_tipo_doc'] ?? '') === '36' ? 'NIT: 9 o 14 dígitos, sin guiones.' : 'Hasta 20 caracteres.')">
+                <input wire:model.blur="empresa.responsable_num_doc" maxlength="20">
+            </x-campo>
+            <div class="flex flex-wrap gap-6 sm:col-span-2 lg:col-span-3">
+                <label class="flex items-center gap-2"><input type="checkbox" wire:model="empresa.agente_retencion"> Agente de retención</label>
+                <label class="flex items-center gap-2"><input type="checkbox" wire:model="empresa.agente_percepcion"> Agente de percepción</label>
+            </div>
+            <div class="flex justify-end sm:col-span-2 lg:col-span-3"><button class="btn-primario">Guardar datos</button></div>
         </form>
     </section>
 

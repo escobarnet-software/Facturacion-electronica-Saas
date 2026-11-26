@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Dte\Validacion\ReglasHacienda as R;
 use App\Enums\Rol;
 use App\Mail\InvitacionDueno;
 use App\Models\AccesoSoporte;
@@ -46,15 +47,17 @@ class Empresas extends Component
     public function crear(Tenancy $tenancy): void
     {
         Gate::authorize('superadmin');
+        $this->nueva['nit'] = (string) R::soloDigitos($this->nueva['nit']);
+        $this->nueva['nrc'] = (string) R::soloDigitos($this->nueva['nrc']);
         $d = $this->validate([
-            'nueva.nit' => ['required', 'regex:/^(\d{9}|\d{14})$/'],
-            'nueva.nrc' => ['nullable', 'regex:/^\d{1,8}$/'],
-            'nueva.razon_social' => 'required|string|max:250',
-            'nueva.correo' => 'required|email|max:100',
+            'nueva.nit' => R::nit(),
+            'nueva.nrc' => R::nrc(false),
+            'nueva.razon_social' => R::texto('nombre'),
+            'nueva.correo' => R::correo(),
             'nueva.plan_id' => 'required|integer',
             'nueva.dueno_email' => 'required|email|max:255',
             'nueva.dueno_nombre' => 'required|string|max:255',
-        ], ['nueva.nit.regex' => 'El NIT debe tener 9 o 14 dígitos, sin guiones.'])['nueva'];
+        ], R::mensajes(['nueva.nit' => 'nit', 'nueva.nrc' => 'nrc', 'nueva.correo' => 'correo']))['nueva'];
 
         $this->invitacionEnviada = null;
         $tenancy->sinAislamiento(function () use ($d, $tenancy) {
