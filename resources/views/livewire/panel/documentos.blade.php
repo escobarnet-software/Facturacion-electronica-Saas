@@ -50,6 +50,10 @@
                                     <a class="btn-secundario !px-2.5 !py-1 text-xs" href="{{ route('panel.documentos.json', $d) }}">JSON</a>
                                 @endif
                                 @can('emitir')@if (in_array($d->estado, [\App\Enums\EstadoDte::Rechazado, \App\Enums\EstadoDte::Firmado, \App\Enums\EstadoDte::Borrador], true))<button wire:click="reenviar({{ $d->id }})" class="btn-primario !px-2.5 !py-1 text-xs">Reenviar</button>@endif @endcan
+                                @can('invalidar')@if ($d->tipo === '03' && $d->sello_recibido && in_array($d->estado, [\App\Enums\EstadoDte::Transmitido, \App\Enums\EstadoDte::Observado, \App\Enums\EstadoDte::Ajustado], true))
+                                    <a class="btn-secundario !px-2.5 !py-1 text-xs" href="{{ route('panel.nota', ['dte' => $d->id, 'tipo' => '05']) }}" title="Nota de Crédito">N. crédito</a>
+                                    <a class="btn-secundario !px-2.5 !py-1 text-xs" href="{{ route('panel.nota', ['dte' => $d->id, 'tipo' => '06']) }}" title="Nota de Débito">N. débito</a>
+                                @endif @endcan
                                 @can('invalidar')@if ($d->sello_recibido && $d->estado !== \App\Enums\EstadoDte::Invalidado)<a class="btn-secundario !px-2.5 !py-1 text-xs !text-rose-700" href="{{ route('panel.invalidaciones', ['dte' => $d->id]) }}">Invalidar</a>@endif @endcan
                             </div>
                         </td>

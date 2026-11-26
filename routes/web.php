@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/documentos/{dte}/pdf', [DocumentoDescargaController::class, 'pdf'])->name('panel.documentos.pdf');
         Route::get('/panel/documentos/{dte}/json', [DocumentoDescargaController::class, 'json'])->name('panel.documentos.json');
         Route::get('/panel/invalidaciones', Panel\Invalidaciones::class)->name('panel.invalidaciones');
+        Route::get('/panel/documentos/{dte}/nota', Panel\NotaAjuste::class)->whereNumber('dte')->name('panel.nota');
         Route::get('/panel/contingencia', Panel\ContingenciaEstado::class)->name('panel.contingencia');
         Route::get('/panel/productos', Panel\Productos::class)->name('panel.productos');
         Route::get('/panel/clientes', Panel\Clientes::class)->name('panel.clientes');
@@ -56,6 +57,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/reportes/{libro}.{formato}', LibroDescargaController::class)
             ->whereIn('libro', ['consumidor', 'contribuyentes', 'compras'])->whereIn('formato', ['csv', 'xlsx'])->name('panel.reportes.descargar');
         Route::get('/panel/api', Panel\ApiWebhooks::class)->name('panel.api');
+        Route::get('/panel/usuarios', Panel\Usuarios::class)->name('panel.usuarios');
         Route::get('/panel/plan', Panel\Suscripcion::class)->name('panel.suscripcion');
         Route::get('/panel/configuracion', Panel\Onboarding::class)->name('panel.onboarding');
 

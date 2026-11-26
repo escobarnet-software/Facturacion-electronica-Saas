@@ -32,13 +32,13 @@ use Illuminate\Http\Response;
 final class DteController
 {
     /** Tipos que la API emite por ahora (los mismos que el panel). */
-    public const TIPOS_EMISION = ['01', '03'];
+    public const TIPOS_EMISION = ['01', '03', '05', '06'];
 
     public function emitir(Request $request, string $tipo, EmisionDte $emision, Idempotencia $idempotencia): JsonResponse
     {
         return $idempotencia->ejecutar($request, function () use ($request, $tipo, $emision) {
             if (! in_array($tipo, self::TIPOS_EMISION, true)) {
-                return response()->json(['message' => "La API emite por ahora Facturas (01) y Créditos Fiscales (03); el tipo {$tipo} aún no está disponible."], 422);
+                return response()->json(['message' => "La API emite Facturas (01), Créditos Fiscales (03) y sus Notas de Crédito (05) y de Débito (06); el tipo {$tipo} aún no está disponible."], 422);
             }
             if (is_array($cliente = $request->input('cliente'))) {
                 // Se aceptan NIT/NRC con guiones y DUI sin guion; se normalizan al formato de Hacienda.
@@ -84,6 +84,7 @@ final class DteController
                 'correo' => R::correo(false),
                 'calcular' => ['nullable', 'boolean'],
                 'totales' => ['required_if:calcular,false', 'array'],
+                'documento_relacionado' => [in_array($tipo, ['05', '06'], true) ? 'required' : 'prohibited', 'string', 'regex:/^[0-9A-Fa-f-]{36}$/'],
                 'totales.total_pagar' => ['nullable'],
                 'totales.total_gravada' => ['nullable'],
                 'totales.total_iva' => ['nullable'],
@@ -104,14 +105,16 @@ final class DteController
                 codigo: $l['codigo'] ?? null,
             ), array_values($datos['lineas']), array_keys(array_values($datos['lineas'])));
             $pagos = array_map(fn (array $p, int $i) => new Pago((string) $p['codigo'], isset($p['monto']) ? MontoApi::texto($p['monto'], "pagos.{$i}.monto") : null, $p['referencia'] ?? null, $p['plazo'] ?? null, isset($p['periodo']) ? (int) $p['periodo'] : null), array_values($datos['pagos'] ?? []), array_keys(array_values($datos['pagos'] ?? [])));
-            $cliente = isset($datos['cliente']) ? $this->cliente($datos['cliente']) : null;
+            $cliente = isset($datos['cliente']) && ! in_array($tipo, ['05', '06'], true) ? $this->cliente($datos['cliente']) : null;
+            // Notas de crédito y débito: el cliente es el del Crédito Fiscal que ajustan.
+            $relacionado = isset($datos['documento_relacionado']) ? $this->buscar((string) $datos['documento_relacionado']) : null;
 
             if (($datos['calcular'] ?? true) === false) {
-                $this->validarTotales($emision->previsualizar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente), (array) $datos['totales']);
+                $this->validarTotales($emision->previsualizar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, $relacionado), (array) $datos['totales']);
             }
 
             $dte = $emision->emitir($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, $pagos,
-                (int) ($datos['condicion_operacion'] ?? 1), $datos['observaciones'] ?? null, $datos['correo'] ?? null);
+                (int) ($datos['condicion_operacion'] ?? 1), $datos['observaciones'] ?? null, $datos['correo'] ?? null, relacionado: $relacionado);
 
             return response()->json(['data' => $this->recurso($dte)], 201);
         });

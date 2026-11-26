@@ -6,7 +6,10 @@ namespace App\Dte\Emision;
 
 use App\Dte\Contribuyente\CreditoFiscalBuilder;
 use App\Dte\Contribuyente\DocumentoContribuyente;
+use App\Dte\Contribuyente\DocumentoRelacionado;
 use App\Dte\Contribuyente\Linea;
+use App\Dte\Contribuyente\NotaCreditoBuilder;
+use App\Dte\Contribuyente\NotaDebitoBuilder;
 use App\Dte\Contribuyente\ReceptorContribuyente;
 use App\Dte\Contribuyente\TipoVenta;
 use App\Dte\Correlativos\Correlativos;
@@ -58,14 +61,15 @@ final class EmisionDte
         ?string $observaciones = null,
         ?string $correoReceptor = null,
         bool $transmitir = true,
+        ?Dte $relacionado = null,
     ): Dte {
         $this->validarEmpresa($empresa);
         // Se arma una vista previa ANTES de tomar el correlativo: un error de datos no consume números.
-        $this->previsualizar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente);
+        $this->previsualizar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, $relacionado);
 
         $fecha = CarbonImmutable::now((string) config('dte.zona_horaria'));
         $correlativo = $this->correlativos->siguiente($empresa, $tipo, $establecimiento, $puntoVenta, $fecha);
-        [$json, $codigo, $numero, $version] = $this->armar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, $pagos, $condicionOperacion, $observaciones, $correoReceptor, $correlativo, $fecha);
+        [$json, $codigo, $numero, $version] = $this->armar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, $pagos, $condicionOperacion, $observaciones, $correoReceptor, $correlativo, $fecha, $relacionado);
 
         $documento = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         $resumen = $documento['resumen'];
@@ -108,9 +112,9 @@ final class EmisionDte
      * @param  list<LineaSolicitud>  $lineas
      * @return array<string, mixed>
      */
-    public function previsualizar(Empresa $empresa, Establecimiento $establecimiento, PuntoVenta $puntoVenta, string $tipo, array $lineas, ?Cliente $cliente = null): array
+    public function previsualizar(Empresa $empresa, Establecimiento $establecimiento, PuntoVenta $puntoVenta, string $tipo, array $lineas, ?Cliente $cliente = null, ?Dte $relacionado = null): array
     {
-        [$json] = $this->armar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, [], 1, null, null, 1, CarbonImmutable::now((string) config('dte.zona_horaria')));
+        [$json] = $this->armar($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $cliente, [], 1, null, null, 1, CarbonImmutable::now((string) config('dte.zona_horaria')), $relacionado);
 
         return json_decode($json, true, flags: JSON_THROW_ON_ERROR)['resumen'];
     }
@@ -120,13 +124,16 @@ final class EmisionDte
      * @param  list<Pago>  $pagos
      * @return array{0: string, 1: string, 2: string, 3: int} [json, código, número de control, versión]
      */
-    private function armar(Empresa $empresa, Establecimiento $establecimiento, PuntoVenta $puntoVenta, string $tipo, array $lineas, ?Cliente $cliente, array $pagos, int $condicionOperacion, ?string $observaciones, ?string $correoReceptor, int $correlativo, CarbonImmutable $fecha): array
+    private function armar(Empresa $empresa, Establecimiento $establecimiento, PuntoVenta $puntoVenta, string $tipo, array $lineas, ?Cliente $cliente, array $pagos, int $condicionOperacion, ?string $observaciones, ?string $correoReceptor, int $correlativo, CarbonImmutable $fecha, ?Dte $relacionado = null): array
     {
-        if (! in_array($tipo, ['01', '03'], true)) {
-            throw new DteException('Desde el panel se emiten Facturas (01) y Créditos Fiscales (03).');
+        if (! in_array($tipo, ['01', '03', '05', '06'], true)) {
+            throw new DteException('Desde el panel se emiten Facturas (01), Créditos Fiscales (03) y sus Notas de Crédito (05) y de Débito (06).');
         }
         if ($lineas === []) {
             throw new DteException('Agregue al menos un producto o servicio.');
+        }
+        if (in_array($tipo, ['05', '06'], true)) {
+            return $this->armarAjuste($empresa, $establecimiento, $puntoVenta, $tipo, $lineas, $relacionado, $condicionOperacion, $observaciones, $correoReceptor, $correlativo, $fecha);
         }
         if ($tipo === '03' && ($cliente === null || ! $cliente->puedeRecibirCcf())) {
             throw new DteException('Para un Crédito Fiscal el cliente debe estar inscrito en IVA (NRC), con actividad económica y dirección completa.');
@@ -207,6 +214,63 @@ final class EmisionDte
         $precio = Decimal::of($l->precioSinIva)->mul('1.13')->round(8);
 
         return new LineaVenta($l->descripcion, $l->cantidad, $precio, $l->uniMedida, $l->tipoItem, $l->codigo);
+    }
+
+    /**
+     * Nota de Crédito (05) o de Débito (06) que ajusta un Crédito Fiscal con sello.
+     *  - El receptor es el MISMO del Crédito Fiscal (se toma del documento sellado, no del catálogo).
+     *  - Cada línea indica el código de generación del Crédito Fiscal que ajusta.
+     *  - La Nota de Crédito no puede superar lo vendido en el Crédito Fiscal, contando las notas
+     *    de crédito anteriores (Hacienda: «MONTO ES MAYOR AL DOCUMENTO RELACIONADO»).
+     *
+     * @param  list<LineaSolicitud>  $lineas
+     * @return array{0: string, 1: string, 2: string, 3: int}
+     */
+    private function armarAjuste(Empresa $empresa, Establecimiento $establecimiento, PuntoVenta $puntoVenta, string $tipo, array $lineas, ?Dte $relacionado, int $condicionOperacion, ?string $observaciones, ?string $correoReceptor, int $correlativo, CarbonImmutable $fecha): array
+    {
+        $nombre = $tipo === '05' ? 'La Nota de Crédito' : 'La Nota de Débito';
+        if ($relacionado === null || $relacionado->tipo !== '03') {
+            throw new DteException("{$nombre} se emite sobre un Comprobante de Crédito Fiscal.");
+        }
+        if ($relacionado->sello_recibido === null || ! in_array($relacionado->estado, [EstadoDte::Transmitido, EstadoDte::Observado, EstadoDte::Ajustado], true)) {
+            throw new DteException("{$nombre} solo puede ajustar un Crédito Fiscal vigente y con sello de Hacienda.");
+        }
+        $r = (array) ($relacionado->json_original['receptor'] ?? []);
+        $dir = (array) ($r['direccion'] ?? []);
+        $receptor = new ReceptorContribuyente(
+            nit: (string) ($r['nit'] ?? ''), nrc: isset($r['nrc']) ? (string) $r['nrc'] : null, nombre: (string) ($r['nombre'] ?? ''),
+            codActividad: (string) ($r['codActividad'] ?? ''), descActividad: (string) ($r['descActividad'] ?? ''),
+            departamento: (string) ($dir['departamento'] ?? ''), municipio: (string) ($dir['municipio'] ?? ''), distrito: (string) ($dir['distrito'] ?? ''), complemento: (string) ($dir['complemento'] ?? ''),
+            correo: $correoReceptor ?? (isset($r['correo']) ? (string) $r['correo'] : null), telefono: isset($r['telefono']) ? (string) $r['telefono'] : null,
+            nombreComercial: isset($r['nombreComercial']) ? (string) $r['nombreComercial'] : null,
+        );
+        $codigoRel = $relacionado->codigo_generacion;
+        $doc = new DocumentoContribuyente(
+            lineas: array_map(fn (LineaSolicitud $l) => new Linea($l->descripcion, $l->cantidad, $l->precioSinIva, TipoVenta::from($l->tipoVenta), $l->descuento, $l->tipoItem, $l->uniMedida, $l->codigo, null, $codigoRel), $lineas),
+            receptor: $receptor,
+            correlativo: $correlativo,
+            fechaHora: $fecha->toDateTimeImmutable(),
+            relacionados: [new DocumentoRelacionado('03', $codigoRel, $relacionado->fecha_emision->toDateTimeImmutable())],
+            condicionOperacion: $condicionOperacion,
+            observaciones: $observaciones,
+        );
+        $emisor = $this->emisor($empresa, $establecimiento, $puntoVenta);
+        $a = $tipo === '05' ? (new NotaCreditoBuilder($emisor, $empresa->ambiente))->construir($doc) : (new NotaDebitoBuilder($emisor, $empresa->ambiente))->construir($doc);
+
+        if ($tipo === '05') {
+            $ventas = fn (array $res) => Decimal::of($this->texto($res['totalGravada'] ?? 0))->add($this->texto($res['totalExenta'] ?? 0))->add($this->texto($res['totalNoSuj'] ?? 0));
+            $previas = Dte::query()->where('tipo', '05')
+                ->whereIn('estado', [EstadoDte::Borrador->value, EstadoDte::Firmado->value, EstadoDte::Transmitido->value, EstadoDte::Observado->value, EstadoDte::Transitorio->value, EstadoDte::Ajustado->value])
+                ->whereJsonContains('json_original->documentoRelacionado', [['numeroDocumento' => $codigoRel]])->get()
+                ->reduce(fn (Decimal $s, Dte $d) => $s->add($ventas((array) $d->json_original['resumen'])), Decimal::zero());
+            $esta = $ventas((array) $a->documento()['resumen']);
+            $original = $ventas((array) $relacionado->json_original['resumen']);
+            if ($previas->add($esta)->compareTo($original) > 0) {
+                throw new DteException('La Nota de Crédito supera lo vendido en el Crédito Fiscal: disponible para acreditar $'.$original->sub($previas)->toFixed(2).'.');
+            }
+        }
+
+        return [$a->json, $a->codigoGeneracion, $a->numeroControl, $a->version];
     }
 
     private function lineaCcf(LineaSolicitud $l): Linea

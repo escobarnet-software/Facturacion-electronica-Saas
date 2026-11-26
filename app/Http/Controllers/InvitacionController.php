@@ -33,6 +33,7 @@ final class InvitacionController
         Auth::login($usuario);
         $request->session()->regenerate();
 
-        return redirect()->route('seguridad.2fa');
+        // El dueño es llevado a activar el doble factor por el middleware 2fa; los demás entran directo.
+        return redirect()->route('panel');
     }
 }

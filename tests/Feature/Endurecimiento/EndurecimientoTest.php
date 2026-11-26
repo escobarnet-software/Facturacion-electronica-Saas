@@ -142,8 +142,9 @@ it('el dueño nuevo recibe una invitación de un solo uso y crea su contraseña'
     $this->get($enlace)->assertOk()->assertSee('Activar su cuenta');
     $this->get(URL::route('invitacion', ['usuario' => $duena->id]))->assertForbidden(); // sin firma
     $this->post($enlace, ['password' => 'corta', 'password_confirmation' => 'corta'])->assertSessionHasErrors('password');
-    $this->post($enlace, ['password' => 'ClaveSegura2026x', 'password_confirmation' => 'ClaveSegura2026x'])->assertRedirect(route('seguridad.2fa'));
+    $this->post($enlace, ['password' => 'ClaveSegura2026x', 'password_confirmation' => 'ClaveSegura2026x'])->assertRedirect(route('panel'));
     $this->assertAuthenticatedAs($duena);
+    $this->get(route('panel'))->assertRedirect(route('seguridad.2fa')); // la dueña debe activar el doble factor
 
     auth()->logout();
     $this->get($enlace)->assertStatus(410);   // un solo uso

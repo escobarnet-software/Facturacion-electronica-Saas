@@ -37,6 +37,7 @@
         ],
         'Mi empresa' => [
             ['panel.onboarding', 'configuracion', 'Configuración y Hacienda', 'administrar-empresa'],
+            ['panel.usuarios', 'usuarios', 'Usuarios', 'administrar-empresa'],
             ['panel.suscripcion', 'plan', 'Plan y soporte', 'administrar-empresa'],
             ['panel.api', 'api', 'API e integraciones', 'administrar-empresa'],
         ],

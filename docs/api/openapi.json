@@ -20,7 +20,7 @@
       "post": {
         "summary": "Emitir un documento",
         "operationId": "emitirDte",
-        "description": "Tipos disponibles: 01 (Factura) y 03 (Crédito Fiscal). Permiso: dte:emitir.",
+        "description": "Tipos disponibles: 01 (Factura), 03 (Crédito Fiscal), 05 (Nota de Crédito) y 06 (Nota de Débito). Las notas ajustan un Crédito Fiscal con sello (documento_relacionado) y usan su mismo cliente. Permiso: dte:emitir.",
         "parameters": [
           {
             "name": "tipo",
@@ -30,7 +30,9 @@
               "type": "string",
               "enum": [
                 "01",
-                "03"
+                "03",
+                "05",
+                "06"
               ]
             }
           },
@@ -732,6 +734,11 @@
                 "$ref": "#/components/schemas/Monto"
               }
             }
+          },
+          "documento_relacionado": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Solo 05 y 06: código de generación del Crédito Fiscal que se ajusta. La Nota de Crédito no puede superar lo vendido en él."
           }
         }
       },
