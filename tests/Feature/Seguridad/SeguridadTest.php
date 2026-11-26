@@ -170,7 +170,10 @@ it('enlaces firmados: el portal y la invitación rechazan firmas alteradas o reu
     $enlace = Entregador::enlacePortal($dte);
     $this->get($enlace)->assertOk();
     $this->get(str_replace($dte->codigo_generacion, $otro->codigo_generacion, $enlace))->assertForbidden();
-    $this->get(preg_replace('/signature=([0-9a-f])/', 'signature=0', $enlace))->assertForbidden();
+    // Se altera un carácter de la firma (siempre distinto del original).
+    $alterado = preg_replace_callback('/signature=([0-9a-f])/', fn ($m) => 'signature='.($m[1] === '0' ? '1' : '0'), $enlace);
+    expect($alterado)->not->toBe($enlace);
+    $this->get($alterado)->assertForbidden();
     $this->get(route('dte.portal.json', ['codigo' => $dte->codigo_generacion]))->assertForbidden(); // sin firma
 
     $usuario = Usuario::factory()->create(['email_verified_at' => null]);
