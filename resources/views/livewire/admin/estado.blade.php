@@ -1,5 +1,5 @@
 <div class="space-y-4" wire:poll.60s>
-    <h1 >Estado de la plataforma</h1>
+    <h1>Estado de la plataforma</h1>
 
     <section class="card text-sm">
         <h2 class="mb-2 font-semibold">Hacienda (últimas 24 horas)</h2>

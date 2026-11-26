@@ -8,8 +8,10 @@ use App\Models\Contingencia;
 use App\Models\Dte;
 use App\Models\EmpresaCredencial;
 use App\Models\Producto;
+use App\Tenancy\Tenancy;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -19,6 +21,16 @@ use Livewire\Component;
 #[Title('Inicio')]
 class Inicio extends Component
 {
+    /** El superadmin sin empresa activa no tiene tablero de empresa: va a la administración de la plataforma. */
+    public function mount(Tenancy $tenancy): mixed
+    {
+        if (! $tenancy->hayEmpresa() && Gate::allows('superadmin')) {
+            return $this->redirectRoute('admin.empresas');
+        }
+
+        return null;
+    }
+
     public function render(): View
     {
         $hoy = CarbonImmutable::now(Plazos::zona());

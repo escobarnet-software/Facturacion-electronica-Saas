@@ -1,5 +1,5 @@
 <div class="space-y-4">
-    <h1 >Cobros</h1>
+    <h1>Cobros</h1>
     <label class="text-sm">Período <input type="month" wire:model.live="periodo" ></label>
     <p class="text-sm text-slate-600">Los cobros se calculan el día 1 de cada mes (<code>plataforma:facturar</code>). Los pagos se registran a mano mientras se define la pasarela de cobro.</p>
     <div class="overflow-x-auto"><table class="w-full text-sm">

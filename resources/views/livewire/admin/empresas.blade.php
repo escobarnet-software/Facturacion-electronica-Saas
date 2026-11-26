@@ -1,14 +1,18 @@
 <div class="space-y-4">
-    <h1 >Empresas</h1>
+    <div>
+        <h1>Empresas</h1>
+        <p class="mt-1 text-sm text-slate-500">Dé de alta a sus clientes. El dueño recibe un correo para crear su contraseña y luego configura su empresa y sus credenciales de Hacienda (usted nunca las ve).</p>
+    </div>
     @if ($mensaje)<div class="alerta-info" role="status">{{ $mensaje }}</div>@endif
     @if ($invitacionEnviada)
         <div class="alerta-info" role="status">Se envió la invitación a {{ $invitacionEnviada }} (vence en 72 horas).</div>
     @endif
 
-    <form wire:submit="crear" class="grid gap-2 card text-sm sm:grid-cols-4">
+    <form wire:submit="crear" class="card grid gap-2 text-sm sm:grid-cols-4">
+        <div class="card-titulo sm:col-span-4"><x-icono nombre="mas" clase="size-5 text-marca-600"/>Nueva empresa</div>
         <input wire:model="nueva.nit" placeholder="NIT (sin guiones)"  aria-label="NIT">
         <input wire:model="nueva.nrc" placeholder="NRC"  aria-label="NRC">
-        <input wire:model="nueva.razon_social" placeholder="Razón social"class="sm:col-span-2" aria-label="Razón social">
+        <input wire:model="nueva.razon_social" placeholder="Razón social" class="sm:col-span-2" aria-label="Razón social">
         <input wire:model="nueva.correo" placeholder="Correo de la empresa"  aria-label="Correo">
         <select wire:model="nueva.plan_id"  aria-label="Plan"><option value="">Plan…</option>@foreach ($planes as $p)<option value="{{ $p->id }}">{{ $p->nombre }}</option>@endforeach</select>
         <input wire:model="nueva.dueno_nombre" placeholder="Nombre del dueño"  aria-label="Nombre del dueño">
@@ -21,7 +25,7 @@
         <div class="overflow-x-auto"><table class="w-full text-sm">
             <thead><tr class="bg-slate-100 text-left"><th class="p-2">Empresa</th><th>NIT</th><th>Ambiente</th><th>Plan</th><th class="text-right">Documentos del mes</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody>
-            @foreach ($filas as $f)
+            @forelse ($filas as $f)
                 <tr class="border-t" wire:key="e-{{ $f['id'] }}">
                     <td class="p-2">{{ $f['razon_social'] }}</td>
                     <td>{{ $f['nit'] }}</td>
@@ -47,7 +51,9 @@
                         @endif
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr><td colspan="7" class="p-6 text-center text-slate-500">Aún no hay empresas. Cree la primera con el formulario de arriba.</td></tr>
+            @endforelse
             </tbody>
         </table></div>
     </div>

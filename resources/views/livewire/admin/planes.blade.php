@@ -1,5 +1,5 @@
 <div class="space-y-4">
-    <h1 >Planes</h1>
+    <h1>Planes</h1>
     <form wire:submit="guardar" class="grid gap-2 card text-sm sm:grid-cols-3">
         <input wire:model="plan.codigo" placeholder="Código (ej.: basico)"  aria-label="Código">
         <input wire:model="plan.nombre" placeholder="Nombre"  aria-label="Nombre">

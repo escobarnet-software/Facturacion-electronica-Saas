@@ -11,7 +11,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 /** Superadmin: planes configurables (nunca fijos en el código). Precios sin IVA, como texto exacto. */
-#[Layout('layouts.admin')]
+#[Layout('layouts.panel')]
 #[Title('Planes')]
 class Planes extends Component
 {

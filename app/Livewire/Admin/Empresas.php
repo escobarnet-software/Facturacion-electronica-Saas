@@ -28,7 +28,7 @@ use Livewire\Component;
  * Las consultas usan Tenancy::sinAislamiento() porque el superadmin opera la PLATAFORMA (todas las
  * empresas); solo se leen columnas de negocio no sensibles (nada de empresa_credenciales).
  */
-#[Layout('layouts.admin')]
+#[Layout('layouts.panel')]
 #[Title('Empresas')]
 class Empresas extends Component
 {

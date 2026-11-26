@@ -21,7 +21,7 @@ use Throwable;
  * Superadmin: estado de Hacienda (latencia y errores por endpoint), colas, contingencias activas
  * y métricas de la plataforma. Agregados sin aislamiento (solo conteos, sin datos de los clientes).
  */
-#[Layout('layouts.admin')]
+#[Layout('layouts.panel')]
 #[Title('Estado de la plataforma')]
 class Estado extends Component
 {

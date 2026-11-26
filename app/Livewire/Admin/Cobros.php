@@ -14,7 +14,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /** Superadmin: cobros mensuales y registro manual de pagos (pasarela pendiente, decisión 3). */
-#[Layout('layouts.admin')]
+#[Layout('layouts.panel')]
 #[Title('Cobros')]
 class Cobros extends Component
 {

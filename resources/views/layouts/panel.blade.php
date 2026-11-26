@@ -14,9 +14,17 @@
     $rol = $usuario?->rolActual();
     $misEmpresas = $usuario?->empresas()->orderBy('razon_social')->get() ?? collect();
     $menu = [
-        'General' => [
-            ['panel', 'inicio', 'Inicio', null],
+        // Administración de la plataforma (solo superadmin de Escobar Net).
+        'Escobar Net' => [
+            ['admin.empresas', 'sucursales', 'Empresas', 'superadmin'],
+            ['admin.planes', 'plan', 'Planes', 'superadmin'],
+            ['admin.cobros', 'caja', 'Cobros', 'superadmin'],
+            ['admin.estado', 'alerta', 'Estado de la plataforma', 'superadmin'],
+            ['horizon.index', 'libros', 'Colas (Horizon)', 'superadmin'],
         ],
+        'General' => $empresa ? [
+            ['panel', 'inicio', 'Inicio', null],
+        ] : [],
         'Ventas' => [
             ['panel.emitir', 'emitir', 'Emitir documento', 'emitir'],
             ['panel.caja', 'caja', 'Caja rápida', 'emitir'],
@@ -77,6 +85,12 @@
         {{-- Barra superior --}}
         <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6">
             <button type="button" class="text-slate-600 lg:hidden" x-on:click="abierto = true" aria-label="Abrir menú"><x-icono nombre="menu" clase="size-6"/></button>
+            @if (! $empresa && $usuario?->es_superadmin)
+                <div class="min-w-0">
+                    <div class="truncate text-sm font-semibold text-tinta">Administración de la plataforma</div>
+                    <div class="truncate text-xs text-slate-500">Escobar Net · Superadmin</div>
+                </div>
+            @endif
             @if ($empresa)
                 <div class="min-w-0">
                     <div class="truncate text-sm font-semibold text-tinta">{{ $empresa->nombre_comercial ?? $empresa->razon_social }}</div>
@@ -102,7 +116,7 @@
                 @if ($usuario)
                     <div class="hidden text-right sm:block">
                         <div class="text-sm font-medium text-tinta">{{ $usuario->nombre }}</div>
-                        <div class="text-xs text-slate-500">{{ $rol?->etiqueta() ?? ($usuario->es_superadmin ? 'Soporte' : '') }}</div>
+                        <div class="text-xs text-slate-500">{{ $rol?->etiqueta() ?? ($usuario->es_superadmin ? 'Superadmin' : '') }}</div>
                     </div>
                     <div class="flex size-9 items-center justify-center rounded-full bg-marca-100 text-sm font-bold text-marca-700">{{ mb_strtoupper(mb_substr($usuario->nombre, 0, 1)) }}</div>
                 @endif

@@ -137,6 +137,28 @@ it('el superadmin no puede ver credenciales: ni en sus pantallas ni como soporte
     expect(json_encode($credencial->toArray()))->not->toContain('ClaveApiFalsa#2026')->not->toContain($cifrado);
 });
 
+it('el superadmin entra directo a la administración y ve su menú completo', function () {
+    $admin = superadmin();
+    tenancy()->limpiar();
+    $this->actingAs($admin);
+
+    // Después del login (home = /panel) no queda en un tablero vacío: va a Empresas.
+    $this->get(route('panel'))->assertRedirect(route('admin.empresas'));
+
+    $this->get(route('admin.empresas'))->assertOk()
+        ->assertSee('Administración de la plataforma')
+        ->assertSee(route('admin.planes'), false)->assertSee(route('admin.cobros'), false)
+        ->assertSee(route('admin.estado'), false)->assertSee(route('horizon.index'), false)
+        ->assertSee('Nueva empresa')
+        ->assertDontSee(route('panel.emitir'), false);   // sin empresa no hay menú de empresa
+});
+
+it('un usuario de empresa no ve el menú de administración', function () {
+    $this->actingAs($this->d['usuario']);
+    $this->get(route('panel'))->assertOk()->assertDontSee(route('admin.empresas'), false);
+    $this->get(route('admin.empresas'))->assertForbidden();
+});
+
 it('el acceso de soporte exige el permiso temporal vigente de la empresa', function () {
     $admin = superadmin();
     tenancy()->limpiar();
