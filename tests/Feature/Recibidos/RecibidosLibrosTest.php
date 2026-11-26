@@ -202,3 +202,24 @@ it('el panel muestra los recibidos y los reportes y descarga el libro', function
     $this->get(route('panel.reportes.descargar', ['libro' => 'consumidor', 'formato' => 'csv', 'desde' => $this->desde, 'hasta' => $this->hasta]))
         ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
 });
+
+it('el Excel del libro tiene formato profesional: encabezado de color, montos numéricos, totales y columnas ajustadas', function () {
+    emitidoParaLibro($this->d, '03');
+    $ruta = (new ExportadorLibros(new LibrosIva))->xlsx('contribuyentes', $this->desde, $this->hasta);
+
+    $zip = new ZipArchive;
+    expect($zip->open($ruta))->toBeTrue();
+    $hoja = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+    $estilos = (string) $zip->getFromName('xl/styles.xml');
+    $zip->close();
+    @unlink($ruta);
+
+    expect($hoja)->toContain('Libro de ventas a contribuyentes')   // título
+        ->toContain('<cols>')                                      // anchos por columna (texto completo)
+        ->toContain('<autoFilter')                                 // filtros en el encabezado
+        ->toContain('ySplit="6"')                                  // encabezado fijo
+        ->toContain('TOTALES')
+        ->toMatch('/<c r="J7"[^>]*><v>100<\/v>/')                 // ventas gravadas como número (no texto)
+        ->toMatch('/<c r="K7"[^>]*><v>13<\/v>/');                 // débito fiscal
+    expect($estilos)->toContain('1F56D6')->toContain('&quot;$&quot;#,##0.00');
+});

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Dte\Reportes;
 
+use App\Models\Empresa;
+use App\Support\Excel\HojaProfesional;
+use App\Tenancy\Tenancy;
 use InvalidArgumentException;
-use OpenSpout\Common\Entity\Row;
-use OpenSpout\Writer\XLSX\Writer;
 
 /**
  * Exporta los libros de IVA a CSV (separado por punto y coma, UTF-8 con BOM, para Excel en español)
@@ -49,16 +50,35 @@ final class ExportadorLibros
         return $csv;
     }
 
-    /** Escribe el XLSX en un archivo temporal y devuelve su ruta. */
+    /** Escribe el XLSX (con formato profesional) en un archivo temporal y devuelve su ruta. */
     public function xlsx(string $libro, string $desde, string $hasta): string
     {
-        $ruta = tempnam(sys_get_temp_dir(), 'libro').'.xlsx';
-        $writer = new Writer;
-        $writer->openToFile($ruta);
-        foreach ($this->renglones($this->datos($libro, $desde, $hasta)) as $renglon) {
-            $writer->addRow(Row::fromValues($renglon));
+        $d = $this->datos($libro, $desde, $hasta);
+        $fijas = count($d['columnas']) - count($d['totales']);
+        $columnas = array_map(
+            fn (string $nombre, int $i) => [$nombre, $i >= $fijas ? 'monto' : ($nombre === 'Documentos' ? 'entero' : 'texto')],
+            $d['columnas'], array_keys($d['columnas']),
+        );
+        $totales = [];
+        foreach (array_values($d['totales']) as $k => $valor) {
+            $totales[$fijas + $k] = $valor;
         }
-        $writer->close();
+        $empresa = Empresa::query()->find(app(Tenancy::class)->empresaId());
+        $formato = fn (string $f) => substr($f, 8, 2).'/'.substr($f, 5, 2).'/'.substr($f, 0, 4);
+
+        $ruta = tempnam(sys_get_temp_dir(), 'libro').'.xlsx';
+        (new HojaProfesional(
+            titulo: self::LIBROS[$libro],
+            columnas: $columnas,
+            filas: $d['filas'],
+            subtitulos: array_values(array_filter([
+                $empresa ? $empresa->razon_social.' · NIT '.$empresa->nit.($empresa->nrc ? ' · NRC '.$empresa->nrc : '') : null,
+                'Período: del '.$formato($desde).' al '.$formato($hasta).' · Montos en dólares de los Estados Unidos (USD)',
+                'Generado el '.now((string) config('dte.zona_horaria'))->format('d/m/Y H:i').' con Escobar Net DTE',
+            ])),
+            totales: $totales,
+            nombreHoja: self::LIBROS[$libro],
+        ))->guardar($ruta);
 
         return $ruta;
     }

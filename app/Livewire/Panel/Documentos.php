@@ -6,7 +6,11 @@ use App\Enums\EstadoDte;
 use App\Enums\Rol;
 use App\Jobs\TransmitirDte;
 use App\Models\Dte;
+use App\Models\Empresa;
 use App\Models\Usuario;
+use App\Support\Decimal;
+use App\Support\Excel\HojaProfesional;
+use App\Tenancy\Tenancy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
@@ -15,8 +19,6 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use OpenSpout\Common\Entity\Row;
-use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** Documentos emitidos: filtros, columnas como las del portal de Hacienda, acciones y exportación a Excel. */
@@ -111,22 +113,40 @@ class Documentos extends Component
     {
         Gate::authorize('ver-documentos');
         $documentos = $this->consulta()->get();
-
-        return response()->streamDownload(function () use ($documentos) {
-            $writer = new Writer;
-            $writer->openToFile('php://output');
-            $writer->addRow(Row::fromValues(['Tipo', 'Número de control', 'Código de generación', 'Tipo doc. receptor', 'N° documento receptor', 'Receptor', 'Fecha de generación', 'Fecha de recepción', 'Monto', 'IVA', 'Estado', 'Sello']));
-            foreach ($documentos as $d) {
-                $writer->addRow(Row::fromValues([
-                    $d->tipo, $d->numero_control, $d->codigo_generacion,
-                    $d->json_original['receptor']['tipoDocumento'] ?? (isset($d->json_original['receptor']['nit']) ? '36' : ''),
-                    (string) $d->receptor_documento, (string) $d->receptor_nombre,
-                    $d->fecha_emision->format('d/m/Y'), $d->fh_procesamiento?->setTimezone('America/El_Salvador')->format('d/m/Y H:i:s') ?? '',
-                    (float) $d->getRawOriginal('total_pagar'), (float) $d->getRawOriginal('total_iva'), $d->estado->etiqueta(), (string) $d->sello_recibido,
-                ]));
+        $empresa = Empresa::query()->find(app(Tenancy::class)->empresaId());
+        $filas = [];
+        $total = Decimal::zero();
+        $iva = Decimal::zero();
+        foreach ($documentos as $d) {
+            $vigente = ! in_array($d->estado, [EstadoDte::Invalidado, EstadoDte::Rechazado, EstadoDte::Borrador], true);
+            if ($vigente) {
+                $total = $total->add((string) $d->getRawOriginal('total_pagar'));
+                $iva = $iva->add((string) $d->getRawOriginal('total_iva'));
             }
-            $writer->close();
-        }, 'documentos-'.now('America/El_Salvador')->format('Ymd-His').'.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+            $filas[] = [
+                $d->tipo, $d->numero_control, $d->codigo_generacion,
+                $d->json_original['receptor']['tipoDocumento'] ?? (isset($d->json_original['receptor']['nit']) ? '36' : ''),
+                (string) $d->receptor_documento, (string) ($d->receptor_nombre ?? 'Consumidor final'),
+                $d->fecha_emision->format('d/m/Y'), $d->fh_procesamiento?->setTimezone('America/El_Salvador')->format('d/m/Y H:i:s') ?? '',
+                (string) $d->getRawOriginal('total_pagar'), (string) $d->getRawOriginal('total_iva'), $d->estado->etiqueta(), (string) $d->sello_recibido,
+            ];
+        }
+        $hoja = new HojaProfesional(
+            titulo: 'Documentos emitidos',
+            columnas: [['Tipo', 'texto'], ['Número de control', 'texto'], ['Código de generación', 'texto'], ['Tipo doc. receptor', 'texto'], ['N° documento receptor', 'texto'], ['Receptor', 'texto'], ['Fecha de generación', 'texto'], ['Fecha de recepción', 'texto'], ['Monto', 'monto'], ['IVA', 'monto'], ['Estado', 'texto'], ['Sello de recepción', 'texto']],
+            filas: $filas,
+            subtitulos: array_values(array_filter([
+                $empresa ? $empresa->razon_social.' · NIT '.$empresa->nit : null,
+                count($filas).' documento(s)'.($this->desde || $this->hasta ? ' · del '.($this->desde ?? '…').' al '.($this->hasta ?? '…') : '').' · Totales sin invalidados, rechazados ni borradores',
+                'Generado el '.now('America/El_Salvador')->format('d/m/Y H:i').' con Escobar Net DTE',
+            ])),
+            totales: [8 => $total->toFixed(2), 9 => $iva->toFixed(2)],
+            nombreHoja: 'Documentos',
+        );
+
+        return response()->streamDownload(fn () => $hoja->guardar('php://output'),
+            'documentos-'.now('America/El_Salvador')->format('Ymd-His').'.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 
     public function render(): View

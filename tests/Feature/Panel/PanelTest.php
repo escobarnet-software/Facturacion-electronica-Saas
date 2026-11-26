@@ -178,10 +178,14 @@ it('el listado filtra por tipo, estado, receptor y código, y exporta a Excel', 
     $reader->close();
     unlink($archivo);
 
-    expect($filas)->toHaveCount(2)
-        ->and($filas[0][1])->toBe('Número de control')
-        ->and($filas[1][1])->toBe($ccf->numero_control)
-        ->and($filas[1][5])->toBe('CLIENTE CONTRIBUYENTE, S.A. DE C.V.');
+    // Hoja con formato: título y datos de la empresa arriba, luego encabezado, datos y totales.
+    $h = collect($filas)->search(fn ($f) => ($f[1] ?? null) === 'Número de control');
+    expect($filas[0][0])->toBe('Documentos emitidos')
+        ->and($h)->not->toBeFalse()
+        ->and($filas[$h + 1][1])->toBe($ccf->numero_control)
+        ->and($filas[$h + 1][5])->toBe('CLIENTE CONTRIBUYENTE, S.A. DE C.V.')
+        ->and($filas[$h + 2][0])->toBe('TOTALES')
+        ->and($filas)->toHaveCount($h + 3);
 });
 
 it('el cajero solo ve lo emitido en su punto de venta y no administra catálogos', function () {
