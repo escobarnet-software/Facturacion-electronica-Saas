@@ -98,6 +98,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: docker compose config -q
+      - name: Configuración de la demo y de la conexión con Hacienda
+        run: docker compose -f docker-compose.demo.yml -f docker-compose.hacienda.yml config -q
       - name: Construir el firmador oficial
         run: docker compose build firmador
       - name: Construir la imagen de producción de la aplicación

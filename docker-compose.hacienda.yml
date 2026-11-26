@@ -1,0 +1,38 @@
+# Conexión REAL con el ambiente de PRUEBAS de Hacienda (apitest.dtes.mh.gob.sv), con el firmador oficial.
+# Se usa junto con la demo:
+#
+#   docker compose -f docker-compose.demo.yml -f docker-compose.hacienda.yml up --build
+#
+# Requisitos: su empresa autorizada para el ambiente de pruebas en factura.gob.sv, su certificado (.crt)
+# y su usuario y contraseña de la API. Los carga USTED en el panel (Configuración y Hacienda): se guardan
+# cifrados y nunca se escriben en este archivo, en el código ni en un chat.
+# Los documentos de pruebas no tienen valor legal. Nunca se envía nada al ambiente de producción.
+
+services:
+  firmador:
+    build: ./docker/firmador
+    image: escobarnet-dte-firmador:2.0.0
+    environment:
+      TZ: America/El_Salvador
+      SPRING_PROFILES_ACTIVE: nonssl
+    volumes:
+      - certificados:/uploads:ro
+    # Solo en la red interna de Docker: el firmador nunca se publica.
+
+  preparar:
+    environment: &hacienda {DTE_SIMULADOR_URL: "", DTE_FIRMADOR_URL: "http://firmador:8113/firmardocumento/", DTE_AMBIENTE: "00"}
+    volumes: [certificados:/var/www/html/storage/app/private/certificados]
+  web:
+    environment: *hacienda
+    volumes: [certificados:/var/www/html/storage/app/private/certificados]
+    depends_on: [firmador]
+  horizon:
+    environment: *hacienda
+    volumes: [certificados:/var/www/html/storage/app/private/certificados]
+    depends_on: [firmador]
+  scheduler:
+    environment: *hacienda
+    volumes: [certificados:/var/www/html/storage/app/private/certificados]
+
+volumes:
+  certificados:

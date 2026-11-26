@@ -66,15 +66,23 @@ class PrepararDemo extends Command
                 'desc_actividad' => 'Venta al por mayor de otros productos', 'correo' => 'compras@cliente-demo.test',
                 'direccion' => ['departamento' => '05', 'municipio' => '25', 'distrito' => '01', 'complemento' => 'Santa Tecla'],
             ]);
-            $usuario = Usuario::query()->where('email', 'contador@demo.test')->first()
-                ?? Usuario::query()->forceCreate(['nombre' => 'Contador Demo', 'email' => 'contador@demo.test', 'password' => $clave, 'email_verified_at' => now()]);
-            $usuario->forceFill(['password' => $clave])->save();
-            if (! $empresa->usuarios()->whereKey($usuario->id)->exists()) {
-                $empresa->usuarios()->attach($usuario->id, ['rol' => Rol::Contador->value]);
+            // Contador (sin doble factor) y Dueño (activa el doble factor al entrar: ve Configuración y Hacienda).
+            foreach ([['contador@demo.test', 'Contador Demo', Rol::Contador], ['dueno@demo.test', 'Dueño Demo', Rol::Dueno], ['cajero@demo.test', 'Cajero Demo', Rol::Cajero]] as [$email, $nombre, $rol]) {
+                $usuario = Usuario::query()->where('email', $email)->first()
+                    ?? Usuario::query()->forceCreate(['nombre' => $nombre, 'email' => $email, 'password' => $clave, 'email_verified_at' => now()]);
+                $usuario->forceFill(['password' => $clave])->save();
+                if (! $empresa->usuarios()->whereKey($usuario->id)->exists()) {
+                    $empresa->usuarios()->attach($usuario->id, ['rol' => $rol->value, 'punto_venta_id' => $rol === Rol::Cajero ? PuntoVenta::query()->orderBy('id')->value('id') : null]);
+                }
             }
         });
 
-        $this->info('Demo lista. Entre con contador@demo.test y la contraseña indicada.');
+        // Superadmin de Escobar Net (doble factor obligatorio): alta de empresas, planes, cobros y estado.
+        $admin = Usuario::query()->where('email', 'admin@demo.test')->first()
+            ?? Usuario::query()->forceCreate(['nombre' => 'Escobar Net (superadmin)', 'email' => 'admin@demo.test', 'password' => $clave, 'email_verified_at' => now()]);
+        $admin->forceFill(['password' => $clave, 'es_superadmin' => true])->save();
+
+        $this->info('Demo lista. Usuarios: contador@demo.test, cajero@demo.test, dueno@demo.test (doble factor) y admin@demo.test (superadmin, doble factor), con la contraseña indicada.');
 
         return self::SUCCESS;
     }
