@@ -49,7 +49,7 @@
     {{-- Menú lateral --}}
     <aside class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-gradient-to-b from-marca-900 via-marca-800 to-marca-900 transition-transform lg:translate-x-0"
            x-bind:class="abierto ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
-        <div class="flex h-16 items-center gap-3 border-b border-white/10 px-5">
+        <div class="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
             <div class="flex size-9 items-center justify-center rounded-xl bg-white/15 text-white"><x-icono nombre="escudo" clase="size-5"/></div>
             <div class="leading-tight">
                 <div class="font-bold text-white">Escobar Net</div>
@@ -57,7 +57,7 @@
             </div>
             <button type="button" class="ml-auto text-marca-100 lg:hidden" x-on:click="abierto = false" aria-label="Cerrar menú"><x-icono nombre="cerrar"/></button>
         </div>
-        <nav class="flex-1 overflow-y-auto px-3 pb-6" aria-label="Menú principal">
+        <nav class="menu-scroll flex-1 overflow-y-auto overscroll-contain px-3 pb-4" aria-label="Menú principal">
             @foreach ($menu as $grupo => $enlaces)
                 @php($visibles = array_filter($enlaces, fn ($e) => $e[3] === null || \Illuminate\Support\Facades\Gate::allows($e[3])))
                 @if ($visibles !== [])
@@ -70,9 +70,6 @@
                 @endif
             @endforeach
         </nav>
-        <div class="border-t border-white/10 p-4 text-xs text-marca-200">
-            Ambiente: <span class="font-semibold text-white">{{ $empresa?->ambiente === '01' ? 'Producción' : 'Pruebas' }}</span>
-        </div>
     </aside>
 
     <div class="lg:pl-64">

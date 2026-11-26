@@ -40,8 +40,8 @@ final class FirmadorClient
 
         $codigo = is_array($datos) ? (string) ($datos['body']['codigo'] ?? '') : '';
         $mensaje = match ($codigo) {
-            '803' => 'No se encontró el certificado de la empresa en el firmador. Cárguelo de nuevo desde Credenciales DTE.',
-            '809', '810' => 'La contraseña de la llave privada no es correcta. Actualícela desde Credenciales DTE.',
+            '803' => 'El firmador no pudo abrir el certificado: no está cargado o la contraseña de la llave privada es incorrecta. Revíselos en Configuración y Hacienda.',
+            '809', '810' => 'La contraseña de la llave privada no es correcta. Actualícela desde Configuración y Hacienda.',
             default => 'No se pudo firmar el documento'.($codigo !== '' ? " (código {$codigo} del firmador)." : '.'),
         };
 

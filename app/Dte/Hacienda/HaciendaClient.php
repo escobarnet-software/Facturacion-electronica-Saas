@@ -51,7 +51,7 @@ final class HaciendaClient
         if ($this->credencial->bloqueado_at !== null || $this->credencial->logins_fallidos >= $limite) {
             throw new CredencialesBloqueadasException(
                 'Las credenciales de la API de Hacienda fallaron varias veces y se dejaron de usar para no bloquear su usuario. '
-                .'Verifíquelas en el portal de Hacienda y cárguelas de nuevo en Credenciales DTE.'
+                .'Verifíquelas en el portal de Hacienda y cárguelas de nuevo en Configuración y Hacienda.'
             );
         }
 
@@ -218,7 +218,7 @@ final class HaciendaClient
 
             throw new CredencialesBloqueadasException(
                 "Hacienda rechazó las credenciales de la API {$fallidos} veces. Se dejaron de usar para no bloquear su usuario. "
-                .'Verifíquelas en el portal de Hacienda y cárguelas de nuevo en Credenciales DTE.'
+                .'Verifíquelas en el portal de Hacienda y cárguelas de nuevo en Configuración y Hacienda.'
             );
         }
 

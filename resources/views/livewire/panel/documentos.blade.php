@@ -31,15 +31,15 @@
     <div class="card overflow-hidden !p-0">
         <div class="overflow-x-auto">
             <table>
-                <thead><tr><th>Tipo</th><th>Número de control</th><th>Cliente</th><th>Emisión</th><th>Sello de Hacienda</th><th class="text-right">Total</th><th class="text-right">IVA</th><th>Estado</th><th class="text-right">Acciones</th></tr></thead>
+                <thead><tr><th>Tipo</th><th>Número de control</th><th>Cliente</th><th>Emisión</th><th class="hidden 2xl:table-cell">Sello de Hacienda</th><th class="text-right">Total</th><th class="text-right">IVA</th><th>Estado</th><th class="text-right">Acciones</th></tr></thead>
                 <tbody>
                 @forelse ($documentos as $d)
                     <tr wire:key="d-{{ $d->id }}" @class(['bg-rose-50/60' => $d->estado === \App\Enums\EstadoDte::Rechazado])>
                         <td><span class="insignia-gris">{{ $d->tipo }}</span></td>
                         <td class="font-mono text-xs whitespace-nowrap">{{ $d->numero_control }}</td>
-                        <td><div class="font-medium text-tinta">{{ $d->receptor_nombre ?? 'Consumidor final' }}</div>@if ($d->receptor_documento)<div class="text-xs text-slate-500">{{ $d->receptor_documento }}</div>@endif</td>
+                        <td class="max-w-56"><div class="truncate font-medium text-tinta" title="{{ $d->receptor_nombre ?? 'Consumidor final' }}">{{ $d->receptor_nombre ?? 'Consumidor final' }}</div>@if ($d->receptor_documento)<div class="text-xs text-slate-500">{{ $d->receptor_documento }}</div>@endif</td>
                         <td class="whitespace-nowrap">{{ $d->fecha_emision->format('d/m/Y') }}</td>
-                        <td class="whitespace-nowrap text-xs text-slate-500">{{ $d->fh_procesamiento?->setTimezone('America/El_Salvador')->format('d/m/Y H:i') ?? '—' }}</td>
+                        <td class="hidden whitespace-nowrap text-xs text-slate-500 2xl:table-cell">{{ $d->fh_procesamiento?->setTimezone('America/El_Salvador')->format('d/m/Y H:i') ?? '—' }}</td>
                         <td class="text-right font-semibold whitespace-nowrap">${{ number_format((float) $d->getRawOriginal('total_pagar'), 2) }}</td>
                         <td class="pr-3 text-right whitespace-nowrap">${{ number_format((float) $d->getRawOriginal('total_iva'), 2) }}</td>
                         <td><x-estado :estado="$d->estado"/></td>

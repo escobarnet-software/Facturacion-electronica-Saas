@@ -113,6 +113,31 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/up && exit 0; sleep 2; done
           docker logs app; exit 1
 
+  firmador-real:
+    name: Firma real con el firmador oficial (certificado ficticio)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, redis, bcmath, intl, mbstring, zip, gd, openssl
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: cp .env.example .env && php artisan key:generate && echo "DTE_SECRETS_KEY=base64:$(openssl rand -base64 32)" >> .env
+      - name: Construir y levantar el firmador oficial
+        run: |
+          docker build -t firmador ./docker/firmador
+          mkdir -p "$RUNNER_TEMP/certs" && chmod 777 "$RUNNER_TEMP/certs"
+          docker run -d --name firmador -p 127.0.0.1:8113:8113 -e SPRING_PROFILES_ACTIVE=nonssl -v "$RUNNER_TEMP/certs:/uploads:ro" firmador
+          for i in $(seq 1 60); do curl -s -o /dev/null -X POST http://127.0.0.1:8113/firmardocumento/ -H 'Content-Type: application/json' -d '{}' && break; sleep 3; done
+      - name: Firmar y verificar la firma RS512
+        env:
+          DTE_FIRMADOR_URL: http://127.0.0.1:8113/firmardocumento/
+          DTE_SIMULADOR_URL: ''
+        run: DTE_CERTIFICADOS_PATH="$RUNNER_TEMP/certs" php artisan dte:firmador:verificar
+
   demo:
     name: Demo con Docker (docker-compose.demo.yml)
     runs-on: ubuntu-latest
