@@ -49,6 +49,9 @@
             ['panel.suscripcion', 'plan', 'Plan y soporte', 'administrar-empresa'],
             ['panel.api', 'api', 'API e integraciones', 'administrar-empresa'],
         ],
+        'Mi cuenta' => [
+            ['panel.cuenta', 'usuarios', 'Contraseña y seguridad', null],
+        ],
     ];
 @endphp
 <div x-data="{ abierto: false }" class="min-h-full">

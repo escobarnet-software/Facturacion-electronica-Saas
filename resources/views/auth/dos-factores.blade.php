@@ -6,6 +6,10 @@
     <h1>Verificación en dos pasos</h1>
     @if ($usuario->two_factor_confirmed_at)
         <p>La verificación en dos pasos está activa.</p>
+        @if (session('status') === 'two-factor-authentication-confirmed')
+            <p><strong>Guarde estos códigos de recuperación.</strong> Sirven para entrar si pierde el celular; cada uno se usa una sola vez. Puede volver a verlos en «Mi cuenta».</p>
+            <ul style="font-family: monospace">@foreach ($usuario->recoveryCodes() as $codigo)<li>{{ $codigo }}</li>@endforeach</ul>
+        @endif
         <p><a href="{{ route('panel') }}">Ir al panel</a></p>
     @elseif ($usuario->two_factor_secret)
         <p>Escanee este código con su aplicación de autenticación y escriba el código de 6 dígitos.</p>

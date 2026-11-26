@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/panel/usuarios', Panel\Usuarios::class)->name('panel.usuarios');
         Route::get('/panel/plan', Panel\Suscripcion::class)->name('panel.suscripcion');
         Route::get('/panel/configuracion', Panel\Onboarding::class)->name('panel.onboarding');
+        Route::get('/panel/mi-cuenta', Panel\MiCuenta::class)->name('panel.cuenta');
 
         Route::post('/empresa-activa', EmpresaActivaController::class)->name('empresa-activa');
 
