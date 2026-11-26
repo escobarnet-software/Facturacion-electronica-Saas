@@ -19,6 +19,14 @@
         </table></div>
     </section>
 
+    <section class="card text-sm">
+        <h2 class="mb-2 font-semibold">Correo</h2>
+        <p>Servidor: <span class="font-mono">{{ $correo['servidor'] }}</span> · Remitente: <span class="font-mono">{{ $correo['remitente'] }}</span>
+            @if ($correo['prueba'])<span class="insignia-ambar ml-2">Buzón de prueba (no sale a internet)</span>@else<span class="insignia-verde ml-2">Correo real</span>@endif</p>
+        <button wire:click="probarCorreo" class="btn-secundario mt-3">Enviarme un correo de prueba</button>
+        @if ($resultadoCorreo)<p class="mt-2" role="status">{{ $resultadoCorreo }}</p>@endif
+    </section>
+
     <div class="grid gap-4 md:grid-cols-3">
         <section class="card text-sm">
             <h2 class="mb-2 font-semibold">Colas</h2>

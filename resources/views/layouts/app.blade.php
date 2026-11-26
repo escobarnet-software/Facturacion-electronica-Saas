@@ -17,6 +17,8 @@
         .acceso .error, .acceso [role=alert] p { color:#be123c; margin:.25rem 0; font-size:.875rem; }
         .acceso p { color:#475569; font-size:.9rem; }
         .acceso img, .acceso svg { max-width:100%; }
+        .acceso a { color:#1f56d6; font-weight:600; font-size:.875rem; }
+        .acceso a:hover { text-decoration:underline; }
         .acceso code { background:#f1f5f9; padding:.1rem .35rem; border-radius:.3rem; }
     </style>
 </head>

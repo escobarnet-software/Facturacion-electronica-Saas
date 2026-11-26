@@ -12,5 +12,6 @@
         <input id="password" name="password" type="password" required autocomplete="current-password">
         <button type="submit">Entrar</button>
     </form>
+    <p style="margin-top:1rem;text-align:center"><a href="{{ route('password.request') }}">¿Olvidó su contraseña?</a></p>
 </div>
 @endsection

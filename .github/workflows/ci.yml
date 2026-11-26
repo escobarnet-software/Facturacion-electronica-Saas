@@ -100,6 +100,8 @@ jobs:
       - run: docker compose config -q
       - name: Configuración de la demo y de la conexión con Hacienda
         run: docker compose -f docker-compose.demo.yml -f docker-compose.hacienda.yml config -q
+      - name: El archivo de correo real se aplica a la demo
+        run: docker compose --env-file correo.env.example -f docker-compose.demo.yml config | grep -q "smtp-relay.brevo.com"
       - name: Construir el firmador oficial
         run: docker compose build firmador
       - name: Construir la imagen de producción de la aplicación

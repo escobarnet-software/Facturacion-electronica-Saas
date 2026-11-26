@@ -27,9 +27,16 @@ x-env: &env
   CACHE_STORE: redis
   QUEUE_CONNECTION: redis
   SESSION_DRIVER: database
+  # Correo: por defecto al buzón de prueba (Mailpit). Para enviar correos REALES, copie
+  # correo.env.example a correo.env, complételo y levante con: docker compose --env-file correo.env -f docker-compose.demo.yml up
   MAIL_MAILER: smtp
-  MAIL_HOST: mailpit
-  MAIL_PORT: "1025"
+  MAIL_HOST: ${MAIL_HOST:-mailpit}
+  MAIL_PORT: ${MAIL_PORT:-1025}
+  MAIL_SCHEME: ${MAIL_SCHEME:-}
+  MAIL_USERNAME: ${MAIL_USERNAME:-}
+  MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+  MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-no-responder@escobarnet.test}
+  MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Escobar Net DTE}
   LOG_CHANNEL: stderr
   DTE_AMBIENTE: "00"
   DTE_ARCHIVO_DISCO: local

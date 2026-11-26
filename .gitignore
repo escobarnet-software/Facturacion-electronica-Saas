@@ -27,3 +27,6 @@ Homestead.yaml
 Thumbs.db
 /storage/framework/phpstan
 /docker/firmador/target
+
+# Credenciales SMTP locales de la demo (nunca al repositorio)
+/correo.env

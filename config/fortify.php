@@ -101,7 +101,8 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    // Límite general por IP en las rutas de acceso (incluye «¿Olvidó su contraseña?»).
+    'middleware' => ['web', 'throttle:acceso'],
 
     /*
     |--------------------------------------------------------------------------
@@ -163,6 +164,7 @@ return [
 
     'features' => [
         // Sin registro público: los usuarios los crea el dueño de la empresa o Escobar Net.
+        Features::resetPasswords(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

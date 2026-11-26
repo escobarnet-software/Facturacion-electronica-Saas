@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Console\Commands\ProbarCorreo;
 use App\Models\Contingencia;
 use App\Models\Dte;
 use App\Models\HaciendaMetrica;
@@ -9,6 +10,7 @@ use App\Tenancy\Tenancy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -26,6 +28,21 @@ class Estado extends Component
     public function mount(): void
     {
         Gate::authorize('superadmin');
+    }
+
+    public ?string $resultadoCorreo = null;
+
+    /** Envía un correo de prueba al superadmin con la configuración SMTP actual. */
+    public function probarCorreo(): void
+    {
+        Gate::authorize('superadmin');
+        $destino = (string) auth()->user()?->email;
+        try {
+            Mail::raw('Correo de prueba de Escobar Net DTE: el envío de correos funciona.', fn ($m) => $m->to($destino)->subject('Prueba de correo de Escobar Net DTE'));
+            $this->resultadoCorreo = "Correo de prueba enviado a {$destino}.";
+        } catch (Throwable $e) {
+            $this->resultadoCorreo = 'No se pudo enviar: '.ProbarCorreo::explicar($e->getMessage());
+        }
     }
 
     public function render(Tenancy $tenancy): View
@@ -52,6 +69,10 @@ class Estado extends Component
                 ->selectRaw("respuesta_mh->>'codigoMsg' AS codigo, count(*) AS total")->groupBy('codigo')->orderByDesc('total')->limit(10)->get(),
         ]);
 
-        return view('livewire.admin.estado', compact('endpoints', 'colas', 'contingencias', 'porDia', 'rechazos'));
+        $mailer = (string) config('mail.default');
+        $correo = ['servidor' => config("mail.mailers.{$mailer}.host").':'.config("mail.mailers.{$mailer}.port"), 'remitente' => (string) config('mail.from.address'),
+            'prueba' => in_array(config("mail.mailers.{$mailer}.host"), ['mailpit', '127.0.0.1', 'localhost'], true)];
+
+        return view('livewire.admin.estado', compact('endpoints', 'colas', 'contingencias', 'porDia', 'rechazos', 'correo'));
     }
 }
