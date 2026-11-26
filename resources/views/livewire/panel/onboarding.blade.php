@@ -1,12 +1,54 @@
 <div class="space-y-6" @if ($pruebas->contains('estado', 'en_curso')) wire:poll.5s @endif>
-    <h1 >Configuración y autorización como emisor</h1>
-    <p class="-mt-2 text-sm text-slate-500">Datos de la empresa, credenciales de Hacienda y pruebas para la autorización como emisor.</p>
-    @if ($error)<div class="alerta-error" role="alert">{{ $error }}</div>@endif
-    @if ($mensaje)<div class="alerta-exito" role="status">{{ $mensaje }}</div>@endif
-    <p class="text-sm text-slate-600">Ambiente actual: <strong>{{ $modelo->ambiente === '01' ? 'Producción' : 'Pruebas (sin valor legal)' }}</strong>.
-        Escobar Net nunca le pedirá contraseñas por chat ni WhatsApp: cárguelas usted mismo aquí.</p>
+    @php
+        $nombresTipo = ['01' => 'Factura', '03' => 'Crédito Fiscal', '04' => 'Nota de remisión', '05' => 'Nota de crédito', '06' => 'Nota de débito',
+            '07' => 'Comprobante de retención', '08' => 'Comprobante de liquidación', '09' => 'Documento contable de liquidación',
+            '11' => 'Factura de exportación', '14' => 'Sujeto excluido', '15' => 'Comprobante de donación',
+            'invalidacion' => 'Anulaciones', 'contingencia' => 'Contingencias', 'retorno' => 'Retornos', 'operaciones_especiales' => 'Operaciones especiales'];
+        $pasos = [
+            ['Datos de la empresa', filled($modelo->cod_actividad) && filled($modelo->direccion), 'paso-datos'],
+            ['Sucursal y caja', $tienePuntoVenta, 'paso-sucursal'],
+            ['Credenciales de Hacienda', count($credenciales) > 0, 'paso-credenciales'],
+            ['Pruebas de Hacienda', $pruebas->isNotEmpty() && $pruebas->every(fn ($p) => $p->estado === 'completada'), 'paso-pruebas'],
+            ['Producción', $modelo->ambiente === '01', 'paso-produccion'],
+        ];
+        $actual = collect($pasos)->search(fn ($p) => ! $p[1]);
+    @endphp
+    <div class="encabezado">
+        <div>
+            <h1>Empresa y Hacienda</h1>
+            <p>Cinco pasos para facturar con validez legal. Escobar Net nunca le pedirá contraseñas por chat ni WhatsApp: cárguelas usted mismo aquí.</p>
+        </div>
+        @if ($modelo->ambiente === '01')
+            <span class="insignia-verde text-sm"><span class="size-1.5 rounded-full bg-emerald-500"></span>Producción: documentos con validez legal</span>
+        @else
+            <span class="insignia-ambar text-sm"><span class="size-1.5 rounded-full bg-amber-500"></span>Pruebas: documentos sin valor legal</span>
+        @endif
+    </div>
+    @if ($error)<div class="alerta-error" role="alert"><x-icono nombre="alerta" clase="size-5 shrink-0"/>{{ $error }}</div>@endif
+    @if ($mensaje)<div class="alerta-exito" role="status"><x-icono nombre="ok" clase="size-5 shrink-0"/>{{ $mensaje }}</div>@endif
 
-    <section class="card">
+    {{-- Avance de los 5 pasos --}}
+    <nav class="card !py-4" aria-label="Avance de la configuración">
+        <ol class="grid gap-3 sm:grid-cols-5">
+            @foreach ($pasos as $i => [$titulo, $listo, $ancla])
+                <li>
+                    <a href="#{{ $ancla }}" class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-50">
+                        @if ($listo)
+                            <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><x-icono nombre="ok" clase="size-4"/></span>
+                        @else
+                            <span @class(['flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold', 'bg-marca-600 text-white ring-4 ring-marca-100' => $i === $actual, 'border-2 border-slate-200 text-slate-400' => $i !== $actual])>{{ $i + 1 }}</span>
+                        @endif
+                        <span class="leading-tight">
+                            <span @class(['block text-xs font-semibold', 'text-tinta' => $listo || $i === $actual, 'text-slate-400' => ! $listo && $i !== $actual])>{{ $titulo }}</span>
+                            <span class="block text-[11px] text-slate-500">{{ $listo ? 'Listo' : ($i === $actual ? 'Siguiente paso' : 'Pendiente') }}</span>
+                        </span>
+                    </a>
+                </li>
+            @endforeach
+        </ol>
+    </nav>
+
+    <section class="card scroll-mt-24" id="paso-datos">
         <div class="card-titulo"><span class="paso">1</span>Datos de la empresa</div>
         <form wire:submit="guardarEmpresa" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" novalidate>
             <x-campo etiqueta="NIT" campo="empresa.nit" ayuda="Lo registra Escobar Net al dar de alta la empresa.">
@@ -67,13 +109,13 @@
         </form>
     </section>
 
-    <section class="card">
+    <section class="card scroll-mt-24" id="paso-sucursal">
         <div class="card-titulo"><span class="paso">2</span>Establecimiento y punto de venta</div>
         <p>@if ($tienePuntoVenta)<span class="insignia-verde">Listo</span> Ya tiene al menos un punto de venta.@else Cree su casa matriz y su punto de venta con los códigos que le asignó Hacienda.@endif
             <a class="underline" href="{{ route('panel.establecimientos') }}">Establecimientos</a></p>
     </section>
 
-    <section class="card">
+    <section class="card scroll-mt-24" id="paso-credenciales">
         <div class="card-titulo"><span class="paso">3</span>Credenciales de Hacienda</div>
         <ol class="mb-3 list-inside list-decimal text-sm text-slate-600">
             <li>En factura.gob.sv solicite el ingreso al ambiente de pruebas.</li>
@@ -98,22 +140,23 @@
         </form>
     </section>
 
-    <section class="card">
+    <section class="card scroll-mt-24" id="paso-pruebas">
         <div class="card-titulo"><span class="paso">4</span>Pruebas mínimas (ambiente de pruebas)</div>
-        <div class="mb-2 flex flex-wrap gap-3 text-sm">
-            @foreach ($tiposDisponibles as $tipo => $n)<label class="flex items-center gap-1"><input type="checkbox" value="{{ $tipo }}" wire:model="tiposPrueba"> {{ $tipo }} ({{ $n }})</label>@endforeach
+        <p class="mb-3 text-sm text-slate-600">Marque solo los documentos que su empresa va a usar. Entre paréntesis, cuántos exige Hacienda. La plataforma los envía sola; si algo falla, se detiene y le explica qué corregir.</p>
+        <div class="mb-4 flex flex-wrap gap-2 text-sm">
+            @foreach ($tiposDisponibles as $tipo => $n)<label class="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50"><input type="checkbox" value="{{ $tipo }}" wire:model="tiposPrueba"> <span>{{ $nombresTipo[$tipo] ?? $tipo }} <span class="text-xs text-slate-400">({{ $n }})</span></span></label>@endforeach
         </div>
         <button wire:click="ejecutarPruebas" class="btn-primario">Ejecutar o reanudar</button>
         <div class="mt-3 space-y-2">
             @foreach ($pruebas as $p)
-                <div><div class="flex justify-between text-sm"><span>{{ $p->tipo }} · {{ $p->estado }}</span><span>{{ $p->exitosas }}/{{ $p->requeridas }}</span></div>
+                <div><div class="flex justify-between text-sm"><span class="font-medium">{{ $nombresTipo[$p->tipo] ?? $p->tipo }} <span class="text-xs font-normal text-slate-500">· {{ str_replace('_', ' ', $p->estado) }}</span></span><span>{{ $p->exitosas }}/{{ $p->requeridas }}</span></div>
                     <progress class="barra" max="100" value="{{ $p->porcentaje() }}" aria-label="Avance de {{ $p->tipo }}">{{ $p->porcentaje() }} %</progress>
                     @if ($p->ultimo_error && $p->estado !== 'completada')<p class="text-xs text-red-700">{{ $p->ultimo_error }}</p>@endif</div>
             @endforeach
         </div>
     </section>
 
-    <section class="card">
+    <section class="card scroll-mt-24" id="paso-produccion">
         <div class="card-titulo"><span class="paso">5</span>Autorización y paso a producción</div>
         <p class="mb-2 text-sm text-slate-600">En el portal de Hacienda (pantalla Inicio) verifique las barras de avance y solicite la autorización. Una vez autorizado, genere el certificado y el usuario de la API de PRODUCCIÓN, cárguelos arriba (ambiente Producción) y pase a producción.</p>
         <button wire:click="pasarAProduccion" wire:confirm="Desde ahora sus documentos tendrán validez legal. ¿Continuar?" class="btn-peligro" @disabled($modelo->ambiente === '01')>Pasar a producción</button>

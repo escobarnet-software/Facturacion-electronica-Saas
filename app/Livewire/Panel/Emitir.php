@@ -20,6 +20,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
@@ -30,6 +31,8 @@ use Livewire\Component;
 #[Title('Emitir')]
 class Emitir extends Component
 {
+    /** Se puede abrir con ?tipo=03 (por ejemplo, desde las acciones rápidas del inicio). */
+    #[Url]
     public string $tipo = '01';
 
     public ?int $clienteId = null;
@@ -54,6 +57,9 @@ class Emitir extends Component
     public function mount(): void
     {
         Gate::authorize('emitir');
+        if (! in_array($this->tipo, ['01', '03'], true)) {
+            $this->tipo = '01';
+        }
         /** @var Usuario $usuario */
         $usuario = auth()->user();
         $this->puntoVentaId = $usuario->puntoVentaActual() ?? PuntoVenta::query()->orderBy('id')->value('id');
