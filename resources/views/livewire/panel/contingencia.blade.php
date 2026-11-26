@@ -1,7 +1,8 @@
 <div class="space-y-4" wire:poll.60s>
-    <h1 class="text-2xl font-semibold">Contingencia</h1>
+    <h1 >Contingencia</h1>
+    <p class="-mt-2 text-sm text-slate-500">Cuando Hacienda no responde, los documentos se entregan igual y aquí se ve su avance hasta obtener el sello.</p>
     @if ($actual)
-        <div class="rounded border border-amber-300 bg-amber-50 p-4">
+        <div class="alerta-aviso block">
             <p><strong>Estado:</strong> {{ ['activa' => 'Activa: Hacienda no responde', 'cerrada' => 'Servicio restablecido: enviando el evento', 'evento_sellado' => 'Evento sellado: transmitiendo documentos'][$actual->estado] ?? $actual->estado }}</p>
             <p><strong>Inicio:</strong> {{ $actual->inicio->setTimezone('America/El_Salvador')->format('d/m/Y H:i') }}
                 @if ($actual->fin) · <strong>Fin:</strong> {{ $actual->fin->setTimezone('America/El_Salvador')->format('d/m/Y H:i') }}@endif</p>
@@ -12,10 +13,10 @@
         <ul class="list-inside list-disc text-sm">@foreach ($pendientes as $d)<li class="font-mono">{{ $d->numero_control }} · {{ $d->estado->etiqueta() }}</li>@endforeach</ul>
         @if ($actual->informe_borrador)
             <h2 class="font-semibold">Borrador del Informe Técnico de Contingencia</h2>
-            <pre class="whitespace-pre-wrap rounded border bg-white p-3 text-sm">{{ $actual->informe_borrador }}</pre>
+            <pre class="whitespace-pre-wrap card text-sm">{{ $actual->informe_borrador }}</pre>
         @endif
     @else
-        <p class="rounded border border-green-300 bg-green-50 p-4">No hay contingencias abiertas: la transmisión a Hacienda funciona con normalidad.</p>
+        <p class="alerta-exito">No hay contingencias abiertas: la transmisión a Hacienda funciona con normalidad.</p>
     @endif
 
     <h2 class="font-semibold">Historial</h2>

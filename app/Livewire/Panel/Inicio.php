@@ -7,6 +7,7 @@ use App\Enums\EstadoDte;
 use App\Models\Contingencia;
 use App\Models\Dte;
 use App\Models\EmpresaCredencial;
+use App\Models\Producto;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -32,7 +33,19 @@ class Inicio extends Component
                 return $limite->greaterThanOrEqualTo($hoy) && $limite->diffInDays($hoy) <= 3;
             })->count();
 
+        $flujo = [
+            ['Configure su empresa y Hacienda', 'Datos de la empresa, credenciales de la API y certificado.', EmpresaCredencial::query()->exists(), 'panel.onboarding', 'administrar-empresa'],
+            ['Registre productos y clientes', 'Catálogo con precios sin IVA y clientes con NRC para Crédito Fiscal.', Producto::query()->exists(), 'panel.productos', 'administrar-catalogos'],
+            ['Emita el documento', 'Desde «Emitir documento» o la «Caja rápida».', Dte::query()->exists(), 'panel.emitir', 'emitir'],
+            ['Hacienda lo sella', 'La plataforma firma, transmite y guarda el sello. Automático.', Dte::query()->whereNotNull('sello_recibido')->exists(), 'panel.documentos', 'ver-documentos'],
+            ['El cliente lo recibe', 'Correo con el PDF y el JSON, y enlace de descarga.', Dte::query()->whereNotNull('entregado_at')->exists(), 'panel.documentos', 'ver-documentos'],
+        ];
+
         return view('livewire.panel.inicio', [
+            'flujo' => $flujo,
+            'documentosHoy' => Dte::query()->where('fecha_emision', $hoy->format('Y-m-d'))->whereIn('estado', $vigentes)->count(),
+            'ivaMes' => (string) (Dte::query()->whereBetween('fecha_emision', [$hoy->startOfMonth()->format('Y-m-d'), $hoy->format('Y-m-d')])->whereIn('estado', $vigentes)->sum('total_iva') ?: '0'),
+            'ultimos' => Dte::query()->orderByDesc('id')->limit(6)->get(),
             'ventasHoy' => $suma(Dte::query()->where('fecha_emision', $hoy->format('Y-m-d'))),
             'ventasMes' => $suma(Dte::query()->whereBetween('fecha_emision', [$hoy->startOfMonth()->format('Y-m-d'), $hoy->format('Y-m-d')])),
             'porEstado' => Dte::query()->selectRaw('estado, count(*) AS n')->groupBy('estado')->pluck('n', 'estado')->all(),

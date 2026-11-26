@@ -57,14 +57,25 @@ class Caja extends Component
 
             return;
         }
+        $this->agregar($producto);
+        $this->codigo = '';
+    }
 
+    /** Botones de acceso rápido de la caja. */
+    public function agregarProducto(int $id): void
+    {
+        $this->error = null;
+        $this->agregar(Producto::query()->where('activo', true)->findOrFail($id));
+    }
+
+    private function agregar(Producto $producto): void
+    {
         $i = collect($this->carrito)->search(fn ($l) => $l['productoId'] === $producto->id);
         if ($i !== false) {
             $this->carrito[$i]['cantidad'] = Decimal::of($this->carrito[$i]['cantidad'])->add(1)->toPlainString();
         } else {
             $this->carrito[] = ['productoId' => $producto->id, 'descripcion' => $producto->descripcion, 'cantidad' => '1', 'precio' => $producto->precio, 'codigo' => $producto->codigo, 'tipoItem' => $producto->tipo_item, 'uniMedida' => $producto->uni_medida];
         }
-        $this->codigo = '';
     }
 
     public function quitar(int $i): void
@@ -85,10 +96,7 @@ class Caja extends Component
 
         try {
             [$establecimiento, $puntoVenta] = $this->ubicacion();
-            $dte = $emision->emitir($this->empresa(), $establecimiento, $puntoVenta, '01', array_map(
-                fn (array $l) => new LineaSolicitud($l['descripcion'], $l['cantidad'], $l['precio'], '0', 'gravada', $l['tipoItem'], $l['uniMedida'], $l['codigo']),
-                $this->carrito,
-            ), pagos: [new Pago($this->formaPago)]);
+            $dte = $emision->emitir($this->empresa(), $establecimiento, $puntoVenta, '01', $this->lineasDelCatalogo(), pagos: [new Pago(in_array($this->formaPago, ['01', '02', '03'], true) ? $this->formaPago : '01')]);
         } catch (DteException $e) {
             $this->error = $e->getMessage();
 
@@ -103,12 +111,39 @@ class Caja extends Component
             : "Factura {$dte->numero_control} emitida: {$dte->estado->etiqueta()}.";
     }
 
+    /**
+     * Las líneas se arman con los datos del CATÁLOGO, nunca con lo que viene del navegador:
+     * el carrito vive en el cliente y se podría manipular (precio, descripción, tipo).
+     *
+     * @return list<LineaSolicitud>
+     */
+    private function lineasDelCatalogo(): array
+    {
+        $lineas = [];
+        foreach ($this->carrito as $l) {
+            $cantidad = trim((string) ($l['cantidad'] ?? ''));
+            if (! preg_match('/^\d{1,9}(\.\d{1,8})?$/', $cantidad) || Decimal::of($cantidad)->isZero()) {
+                throw new DteException('Revise las cantidades: deben ser números mayores que cero.');
+            }
+            $p = Producto::query()->where('activo', true)->findOrFail((int) ($l['productoId'] ?? 0));
+            $lineas[] = new LineaSolicitud($p->descripcion, $cantidad, (string) $p->precio, '0', 'gravada', $p->tipo_item, $p->uni_medida, $p->codigo);
+        }
+
+        return $lineas;
+    }
+
     public function render(): View
     {
-        $total = collect($this->carrito)->reduce(fn (Decimal $s, $l) => $s->add(Decimal::of($l['cantidad'])->mul(Decimal::of($l['precio'])->mul('1.13')->round(8))), Decimal::zero());
+        $total = Decimal::zero();
+        foreach ($this->carrito as $l) {
+            $cantidad = preg_match('/^\d{1,9}(\.\d{1,8})?$/', (string) ($l['cantidad'] ?? '')) ? (string) $l['cantidad'] : '0';
+            $precio = preg_match('/^\d{1,11}(\.\d{1,8})?$/', (string) ($l['precio'] ?? '')) ? (string) $l['precio'] : '0';
+            $total = $total->add(Decimal::of($cantidad)->mul(Decimal::of($precio)->mul('1.13')->round(8)));
+        }
 
         return view('livewire.panel.caja', [
             'total' => $total->round(2)->toFixed(2),
+            'rapidos' => Producto::query()->where('activo', true)->orderBy('descripcion')->limit(12)->get(),
             'ultimo' => $this->ultimoDteId ? Dte::query()->find($this->ultimoDteId) : null,
         ]);
     }

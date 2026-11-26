@@ -1,7 +1,8 @@
 <div class="space-y-4">
-    <h1 class="text-2xl font-semibold">Plan y soporte</h1>
+    <h1 >Plan y soporte</h1>
+    <p class="-mt-2 text-sm text-slate-500">Su plan, el consumo del mes y el acceso temporal del soporte de Escobar Net.</p>
 
-    <section class="rounded border bg-white p-3 text-sm">
+    <section class="card text-sm">
         <h2 class="mb-2 font-semibold">Su plan</h2>
         @if ($plan)
             <p><strong>{{ $plan->nombre }}</strong> · ${{ $plan->getRawOriginal('precio_mensual') }} al mes (más IVA) ·
@@ -16,26 +17,26 @@
     </section>
 
     @if ($cobros->isNotEmpty())
-        <section class="rounded border bg-white p-3 text-sm">
+        <section class="card text-sm">
             <h2 class="mb-2 font-semibold">Cobros</h2>
-            <table class="w-full">
+            <div class="overflow-x-auto"><table class="w-full">
                 <thead><tr class="bg-slate-100 text-left"><th class="p-1">Período</th><th>Documentos</th><th>Adicionales</th><th class="text-right">Subtotal (sin IVA)</th><th>Estado</th></tr></thead>
                 <tbody>
                 @foreach ($cobros as $c)
                     <tr class="border-t"><td class="p-1">{{ $c->periodo }}</td><td>{{ $c->documentos }}</td><td>{{ $c->excedente }}</td><td class="text-right">${{ $c->getRawOriginal('subtotal') }}</td><td>{{ ucfirst($c->estado) }}</td></tr>
                 @endforeach
                 </tbody>
-            </table>
+            </table></div>
         </section>
     @endif
 
-    <section class="rounded border bg-white p-3 text-sm">
+    <section class="card text-sm">
         <h2 class="mb-2 font-semibold">Acceso del soporte de Escobar Net</h2>
         <p class="mb-2 text-slate-600">El soporte solo puede ver sus documentos mientras usted le dé permiso, y nunca ve sus credenciales de Hacienda.</p>
         <form wire:submit="otorgar" class="flex flex-wrap items-end gap-2">
-            <label>Horas <input type="number" wire:model="horas" min="1" max="{{ config('plataforma.soporte_horas_max') }}" class="w-20 rounded border p-1"></label>
-            <input wire:model="motivo" class="flex-1 rounded border p-1" placeholder="Motivo (por ejemplo: revisar un rechazo)" aria-label="Motivo">
-            <button class="rounded bg-blue-700 px-3 py-1 text-white">Dar permiso</button>
+            <label>Horas <input type="number" wire:model="horas" min="1" max="{{ config('plataforma.soporte_horas_max') }}" class="w-20 "></label>
+            <input wire:model="motivo" class="flex-1 " placeholder="Motivo (por ejemplo: revisar un rechazo)" aria-label="Motivo">
+            <button class="btn-primario">Dar permiso</button>
         </form>
         @error('horas')<p class="text-red-700">{{ $message }}</p>@enderror
         @error('motivo')<p class="text-red-700">{{ $message }}</p>@enderror

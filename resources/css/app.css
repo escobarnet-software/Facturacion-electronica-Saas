@@ -4,6 +4,82 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', 'Segoe UI', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --color-marca-50: #eef5ff;
+    --color-marca-100: #d9e8ff;
+    --color-marca-200: #bcd6ff;
+    --color-marca-500: #2f6fea;
+    --color-marca-600: #1f56d6;
+    --color-marca-700: #1a45ad;
+    --color-marca-800: #1b3c89;
+    --color-marca-900: #172f63;
+    --color-tinta: #0f1b2d;
+}
+
+/*
+| Sistema de diseño del panel. Las pantallas usan estas clases; además, los campos y las tablas
+| dentro de <main> toman el estilo base aunque no lleven clase (pantallas antiguas).
+*/
+@layer base {
+    *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-slate-200, currentColor); }
+    body { @apply bg-slate-100 text-slate-800 antialiased; }
+    h1 { @apply text-2xl font-bold tracking-tight text-tinta; }
+    h2 { @apply text-base font-semibold text-tinta; }
+
+    main input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),
+    main select,
+    main textarea {
+        @apply rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-xs transition
+            placeholder:text-slate-400 focus:border-marca-500 focus:ring-4 focus:ring-marca-100 focus:outline-none;
+    }
+    main input[type=checkbox], main input[type=radio] { @apply size-4 rounded border-slate-300 text-marca-600 accent-marca-600; }
+    main input[type=file] {
+        @apply block w-full cursor-pointer text-sm text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0
+            file:bg-marca-50 file:px-4 file:py-2 file:font-semibold file:text-marca-700 hover:file:bg-marca-100;
+    }
+    main label { @apply text-sm font-medium text-slate-700; }
+
+    main .grid > *, main .flex > * { min-width: 0; }
+    main table { @apply w-full text-sm; }
+    main thead tr { @apply bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500; }
+    main th { @apply px-3 py-2.5 whitespace-nowrap; }
+    main td { @apply px-3 py-2.5 align-middle; }
+    main tbody tr { @apply border-t border-slate-100 transition hover:bg-marca-50/40; }
+    main a.underline, main button.underline { @apply font-medium text-marca-700 no-underline hover:text-marca-900 hover:underline; }
+}
+
+@layer components {
+    .card { @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm; }
+    .card-titulo { @apply mb-4 flex items-center gap-2 text-base font-semibold text-tinta; }
+
+    .btn, .btn-primario, .btn-exito, .btn-secundario, .btn-peligro {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition
+            focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60;
+    }
+    .btn-primario { @apply bg-marca-600 text-white shadow-sm shadow-marca-600/30 hover:bg-marca-700 focus:ring-marca-200; }
+    .btn-exito { @apply bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 hover:bg-emerald-700 focus:ring-emerald-200; }
+    .btn-secundario { @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-200; }
+    .btn-peligro { @apply bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-200; }
+    .btn-grande { @apply px-6 py-3 text-base; }
+
+    .insignia, .insignia-verde, .insignia-ambar, .insignia-roja, .insignia-azul, .insignia-gris { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap; }
+    .insignia-verde { @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20; }
+    .insignia-ambar { @apply bg-amber-50 text-amber-800 ring-amber-600/25; }
+    .insignia-roja { @apply bg-rose-50 text-rose-700 ring-rose-600/20; }
+    .insignia-azul { @apply bg-marca-50 text-marca-700 ring-marca-600/20; }
+    .insignia-gris { @apply bg-slate-100 text-slate-600 ring-slate-500/20; }
+
+    .alerta, .alerta-exito, .alerta-error, .alerta-aviso, .alerta-info { @apply flex items-start gap-3 rounded-xl border p-4 text-sm; }
+    .alerta-exito { @apply border-emerald-200 bg-emerald-50 text-emerald-800; }
+    .alerta-error { @apply border-rose-200 bg-rose-50 text-rose-800; }
+    .alerta-aviso { @apply border-amber-200 bg-amber-50 text-amber-900; }
+    .alerta-info { @apply border-marca-200 bg-marca-50 text-marca-800; }
+
+    .nav-grupo { @apply px-3 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-marca-200/70; }
+    .nav-enlace { @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-marca-100 transition hover:bg-white/10 hover:text-white; }
+    .nav-enlace-activo { @apply bg-white/15 text-white shadow-inner; }
+
+    .paso { @apply flex size-7 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-bold text-white; }
+    .kpi-valor { @apply mt-1 text-2xl font-bold tracking-tight text-tinta; }
+    .kpi-etiqueta { @apply text-xs font-semibold uppercase tracking-wide text-slate-500; }
 }

@@ -126,7 +126,7 @@ it('POS: escanea, cobra y transmite', function () {
         ->set('codigo', '7401234567890')->call('escanear')
         ->set('codigo', '7401234567890')->call('escanear')
         ->assertSet('carrito.0.cantidad', '2')
-        ->assertSee('Total $4.00')
+        ->assertSee('Cobrar $4.00')
         ->call('cobrar')
         ->assertSet('error', null)
         ->assertSee('transmitida');

@@ -1,27 +1,27 @@
 <div class="space-y-4">
-    <h1 class="text-2xl font-semibold">Documentos recibidos</h1>
+    <h1 >Documentos recibidos</h1>
     <p class="text-sm text-slate-600">Suba los archivos JSON que le envían sus proveedores. Solo se aceptan documentos completos (con firma y sello de Hacienda), emitidos a nombre de su empresa y sin alteraciones.</p>
 
-    <form wire:submit="importar" class="space-y-2 rounded border bg-white p-3">
+    <form wire:submit="importar" class="space-y-2 card">
         <input type="file" wire:model="archivos" multiple accept=".json,application/json" aria-label="Archivos JSON">
         @error('archivos')<p class="text-sm text-red-700">{{ $message }}</p>@enderror
         @error('archivos.*')<p class="text-sm text-red-700">{{ $message }}</p>@enderror
-        <button class="rounded bg-blue-700 px-3 py-2 text-sm text-white">Registrar documentos</button>
+        <button class="btn-primario">Registrar documentos</button>
     </form>
-    @foreach ($mensajes as $m)<div class="rounded border border-blue-300 bg-blue-50 p-2 text-sm" role="status">{{ $m }}</div>@endforeach
+    @foreach ($mensajes as $m)<div class="alerta-info" role="status">{{ $m }}</div>@endforeach
 
-    <div class="rounded border bg-white p-3 text-sm">
+    <div class="card text-sm">
         <h2 class="font-semibold">Buzón de correo</h2>
         @if ($buzon)
             <p>Dirección de entrega para el servicio de correo entrante: <code class="break-all">{{ $buzon }}</code></p>
         @else
             <p class="text-slate-600">Aún no tiene buzón de entrada.</p>
         @endif
-        @can('administrar-empresa')<button wire:click="generarBuzon" class="mt-2 rounded border px-3 py-1">{{ $buzon ? 'Cambiar dirección' : 'Crear buzón' }}</button>@endcan
+        @can('administrar-empresa')<button wire:click="generarBuzon" class="mt-2 btn-secundario">{{ $buzon ? 'Cambiar dirección' : 'Crear buzón' }}</button>@endcan
     </div>
 
-    <div class="overflow-x-auto rounded border bg-white">
-        <table class="w-full text-sm">
+    <div class="card overflow-x-auto !p-0">
+        <div class="overflow-x-auto"><table class="w-full text-sm">
             <thead><tr class="bg-slate-100 text-left"><th class="p-2">Fecha</th><th>Tipo</th><th>Número de control</th><th>Proveedor</th><th class="text-right">Gravado</th><th class="text-right">IVA</th><th class="text-right">Total</th><th>Origen</th></tr></thead>
             <tbody>
             @forelse ($recibidos as $r)
@@ -39,7 +39,7 @@
                 <tr><td colspan="8" class="p-3 text-slate-500">Todavía no hay documentos recibidos.</td></tr>
             @endforelse
             </tbody>
-        </table>
+        </table></div>
     </div>
     {{ $recibidos->links() }}
 </div>

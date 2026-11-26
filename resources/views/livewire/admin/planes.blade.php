@@ -1,19 +1,19 @@
 <div class="space-y-4">
-    <h1 class="text-2xl font-semibold">Planes</h1>
-    <form wire:submit="guardar" class="grid gap-2 rounded border bg-white p-3 text-sm sm:grid-cols-3">
-        <input wire:model="plan.codigo" placeholder="Código (ej.: basico)" class="rounded border p-1" aria-label="Código">
-        <input wire:model="plan.nombre" placeholder="Nombre" class="rounded border p-1" aria-label="Nombre">
-        <input wire:model="plan.precio_mensual" placeholder="Precio mensual sin IVA" class="rounded border p-1" aria-label="Precio mensual">
-        <input wire:model="plan.documentos_mes" placeholder="Documentos al mes (vacío = ilimitado)" class="rounded border p-1" aria-label="Documentos al mes">
-        <input wire:model="plan.precio_documento_adicional" placeholder="Precio por documento adicional" class="rounded border p-1" aria-label="Precio adicional">
-        <input wire:model="plan.max_establecimientos" placeholder="Máx. establecimientos" class="rounded border p-1" aria-label="Máximo de establecimientos">
-        <input wire:model="plan.max_usuarios" placeholder="Máx. usuarios" class="rounded border p-1" aria-label="Máximo de usuarios">
+    <h1 >Planes</h1>
+    <form wire:submit="guardar" class="grid gap-2 card text-sm sm:grid-cols-3">
+        <input wire:model="plan.codigo" placeholder="Código (ej.: basico)"  aria-label="Código">
+        <input wire:model="plan.nombre" placeholder="Nombre"  aria-label="Nombre">
+        <input wire:model="plan.precio_mensual" placeholder="Precio mensual sin IVA"  aria-label="Precio mensual">
+        <input wire:model="plan.documentos_mes" placeholder="Documentos al mes (vacío = ilimitado)"  aria-label="Documentos al mes">
+        <input wire:model="plan.precio_documento_adicional" placeholder="Precio por documento adicional"  aria-label="Precio adicional">
+        <input wire:model="plan.max_establecimientos" placeholder="Máx. establecimientos"  aria-label="Máximo de establecimientos">
+        <input wire:model="plan.max_usuarios" placeholder="Máx. usuarios"  aria-label="Máximo de usuarios">
         <label><input type="checkbox" wire:model="plan.incluye_api"> Incluye API</label>
         <label><input type="checkbox" wire:model="plan.incluye_pos"> Incluye POS</label>
-        <button class="rounded bg-blue-700 px-3 py-1 text-white sm:col-span-3">Crear plan</button>
+        <button class="btn-primario sm:col-span-3">Crear plan</button>
         @foreach ($errors->all() as $e)<p class="text-red-700 sm:col-span-3">{{ $e }}</p>@endforeach
     </form>
-    <table class="w-full rounded border bg-white text-sm">
+    <div class="overflow-x-auto"><table class="w-full text-sm">
         <thead><tr class="bg-slate-100 text-left"><th class="p-2">Plan</th><th class="text-right">Precio</th><th class="text-right">Documentos</th><th class="text-right">Adicional</th><th>Límites</th><th>Estado</th></tr></thead>
         <tbody>
         @foreach ($planes as $p)
@@ -27,5 +27,5 @@
             </tr>
         @endforeach
         </tbody>
-    </table>
+    </table></div>
 </div>

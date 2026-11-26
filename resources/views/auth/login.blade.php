@@ -3,6 +3,7 @@
 @section('contenido')
 <div class="tarjeta">
     <h1>Iniciar sesión</h1>
+    <p>Ingrese con su correo y contraseña.</p>
     <form method="POST" action="{{ route('login') }}">
         @csrf
         <label for="email">Correo</label>

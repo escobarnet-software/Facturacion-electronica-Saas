@@ -1,21 +1,25 @@
 <div class="space-y-4">
-    <h1 class="text-2xl font-semibold">Libros de IVA</h1>
-    <label class="block text-sm">Período <input type="month" wire:model.live="periodo" class="rounded border p-1"></label>
+    <h1 >Libros de IVA</h1>
+    <p class="-mt-2 text-sm text-slate-500">Libros de ventas y compras y el resumen para su declaración mensual de IVA (F-07).</p>
+    <label class="block text-sm">Período <input type="month" wire:model.live="periodo" ></label>
 
-    <div class="rounded border bg-white p-3">
+    <div class="card">
         <h2 class="mb-2 font-semibold">Descargas del {{ \Illuminate\Support\Carbon::parse($desde)->format('d/m/Y') }} al {{ \Illuminate\Support\Carbon::parse($hasta)->format('d/m/Y') }}</h2>
-        <ul class="space-y-1 text-sm">
+        <div class="grid gap-3 md:grid-cols-3">
             @foreach ($libros as $clave => $nombre)
-                <li>{{ $nombre }}:
-                    <a class="underline" href="{{ route('panel.reportes.descargar', ['libro' => $clave, 'formato' => 'xlsx', 'desde' => $desde, 'hasta' => $hasta]) }}">Excel</a> ·
-                    <a class="underline" href="{{ route('panel.reportes.descargar', ['libro' => $clave, 'formato' => 'csv', 'desde' => $desde, 'hasta' => $hasta]) }}">CSV</a>
-                </li>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-tinta"><x-icono nombre="libros" clase="size-5 text-marca-600"/>{{ $nombre }}</div>
+                    <div class="mt-3 flex gap-2">
+                        <a class="btn-primario !py-1.5 text-xs" href="{{ route('panel.reportes.descargar', ['libro' => $clave, 'formato' => 'xlsx', 'desde' => $desde, 'hasta' => $hasta]) }}"><x-icono nombre="descargar" clase="size-4"/>Excel</a>
+                        <a class="btn-secundario !py-1.5 text-xs" href="{{ route('panel.reportes.descargar', ['libro' => $clave, 'formato' => 'csv', 'desde' => $desde, 'hasta' => $hasta]) }}">CSV</a>
+                    </div>
+                </div>
             @endforeach
-        </ul>
+        </div>
     </div>
 
     <div class="grid gap-4 md:grid-cols-2">
-        <div class="rounded border bg-white p-3 text-sm">
+        <div class="card text-sm">
             <h2 class="mb-2 font-semibold">Resumen para la declaración (F-07)</h2>
             <dl class="grid grid-cols-2 gap-1">
                 @foreach ([
@@ -30,7 +34,7 @@
                 @endforeach
             </dl>
         </div>
-        <div class="rounded border bg-white p-3 text-sm">
+        <div class="card text-sm">
             <h2 class="mb-2 font-semibold">Retenciones y percepciones</h2>
             <dl class="grid grid-cols-2 gap-1">
                 <dt>Retenciones efectuadas (CR emitidos)</dt><dd class="text-right font-mono">${{ $retenciones['retenciones_efectuadas'] }}</dd>

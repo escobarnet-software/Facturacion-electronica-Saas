@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
-<header class="border-b bg-slate-900 text-white">
+<header class="bg-gradient-to-r from-marca-900 to-marca-700 text-white shadow">
     <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3">
         <a href="{{ route('admin.empresas') }}" class="font-semibold">Escobar Net · Superadmin</a>
         <nav class="flex flex-wrap gap-3 text-sm">
