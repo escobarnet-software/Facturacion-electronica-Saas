@@ -4,9 +4,10 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
 COPY pom.xml .
-RUN mvn -q -B dependency:go-offline
+# Reintentos: un corte momentáneo de Maven Central no debe romper la compilación.
+RUN n=0; until mvn -q -B -Dmaven.wagon.http.retryHandler.count=5 dependency:go-offline; do n=$((n+1)); [ "$n" -ge 4 ] && exit 1; echo "Reintentando descarga de dependencias ($n)…"; sleep 15; done
 COPY src ./src
-RUN mvn -q -B -DskipTests package
+RUN n=0; until mvn -q -B -Dmaven.wagon.http.retryHandler.count=5 -DskipTests package; do n=$((n+1)); [ "$n" -ge 3 ] && exit 1; sleep 15; done
 
 FROM amazoncorretto:21-alpine-jdk
 ENV TZ=America/El_Salvador
